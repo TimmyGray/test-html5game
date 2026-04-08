@@ -7,6 +7,7 @@ import TerserPlugin from "terser-webpack-plugin";
 import HtmlInlineScriptPlugin from "html-inline-script-webpack-plugin";
 
 export default (_env, argv) => {
+  const isDevelopment = argv.mode === "development";
   return {
     stats: "minimal", // Keep console output easy to read.
     entry: "./src/main.ts", // Your program entry point
@@ -39,7 +40,7 @@ export default (_env, argv) => {
     performance: { hints: false },
 
     // Enable sourcemaps while debugging
-    devtool: argv.mode === "development" ? "eval-source-map" : undefined,
+    devtool: isDevelopment ? "source-map" : undefined,
 
     // Minify the code when making a final build
     optimization: {
@@ -94,13 +95,11 @@ export default (_env, argv) => {
         minify: true,
       }),
 
-      // Inline JS
-      new HtmlInlineScriptPlugin(),
-
       // Prevent code splitting
       new webpack.optimize.LimitChunkCountPlugin({
         maxChunks: 1,
       }),
+      ...(!isDevelopment ? [new HtmlInlineScriptPlugin()] : []),
     ],
   };
 };

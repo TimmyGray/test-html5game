@@ -45,7 +45,7 @@ describe("SyncClock", () => {
     expect(ticker.speed).toBeCloseTo(1, 5);
   });
 
-  it("does not throw when audio currentTime does not advance between syncs", () => {
+  it("falls back to wall-time delta when audio currentTime does not advance", () => {
     const clock = SyncClock.instance;
     const audioT = 1.0;
     const ctx = {
@@ -57,7 +57,7 @@ describe("SyncClock", () => {
     const ticker = mockTicker(1000 / 60, 1);
     clock.sync(ticker);
     clock.sync(ticker);
-    expect(clock.getDelta()).toBe(0);
+    expect(clock.getDelta()).toBeCloseTo(1000 / 60 / 1000, 6);
   });
 
   it("getDelta returns last audio delta in seconds", () => {

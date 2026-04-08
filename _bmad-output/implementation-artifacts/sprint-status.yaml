@@ -1,5 +1,5 @@
 # generated: 2026-04-08T03:52:50+03:00
-# last_updated: 2026-04-08T05:05:00+03:00
+# last_updated: 2026-04-08T23:25:00+03:00
 # project: The Reactive Planet
 # project_key: NOKEY
 # tracking_system: file-system
@@ -28,20 +28,21 @@
 #   - done: Retrospective has been completed
 
 generated: 2026-04-08T03:52:50+03:00
-last_updated: 2026-04-08T05:05:00+03:00
+last_updated: 2026-04-08T23:25:00+03:00
 project: The Reactive Planet
 project_key: NOKEY
 tracking_system: file-system
 story_location: _bmad-output/implementation-artifacts
 
 development_status:
-  epic-1: backlog
+  epic-1: in-progress
   1-1-the-rhythmic-core-syncclock: done
-  1-2-high-fidelity-flick-ray-cast-intersector: backlog
-  1-3-procedural-debris-storm-object-pooling: backlog
-  epic-1-retrospective: optional
-  epic-2: backlog
-  2-1-the-planetary-heartbeat-uber-shader: backlog
+  1-2-high-fidelity-flick-ray-cast-intersector: done
+  1-3-procedural-debris-storm-object-pooling: done
+  1-4-zero-text-onboarding-tutorial-wave: review
+  epic-1-retrospective: done
+  epic-2: in-progress
+  2-1-the-planetary-heartbeat-uber-shader: ready-for-dev
   2-2-collision-spectacle-shockwaves-aberration: backlog
   2-3-micro-slow-mo-particle-ejection: backlog
   2-4-rhythmic-sfx-feedback-quantizedsfx: backlog

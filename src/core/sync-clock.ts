@@ -43,14 +43,13 @@ export class SyncClock {
    * so speed correction is stable.
    */
   public sync(ticker: Ticker): void {
-    if (!this._audioContext) {
-      this._lastDelta = 0;
-      return;
-    }
-
     const wallDeltaSec = ticker.elapsedMS / 1000;
     if (wallDeltaSec <= 0) {
       this._lastDelta = 0;
+      return;
+    }
+    if (!this._audioContext) {
+      this._lastDelta = wallDeltaSec * this._timeScale;
       return;
     }
 
@@ -58,7 +57,9 @@ export class SyncClock {
     const audioDelta = audioNow - this._lastAudioTime;
     this._lastAudioTime = audioNow;
 
-    this._lastDelta = audioDelta;
+    // When autoplay policy keeps AudioContext suspended, keep simulation advancing on wall time.
+    this._lastDelta =
+      audioDelta > 0 ? audioDelta : wallDeltaSec * this._timeScale;
 
     const targetSpeed = (audioDelta / wallDeltaSec) * this._timeScale;
     // If audio didn't advance this frame, keep prior speed (avoids divide-by-zero / NaN).
