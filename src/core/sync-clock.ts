@@ -1,75 +1,89 @@
-import { Ticker } from 'pixi.js';
+import type { Ticker } from "pixi.js";
 
 /**
- * SyncClock
- * 
- * Synchronizes PixiJS ticker with Web Audio API's audioContext.currentTime.
- * This ensures that visual rhythms stay in the pocket even if the frame-rate fluctuates.
+ * SyncClock — aligns Pixi `ticker.speed` with Web Audio `currentTime` for rhythmic precision.
+ * Call `sync(ticker)` once per frame from the application ticker (before gameplay logic when possible).
  */
 export class SyncClock {
-    private static _instance: SyncClock;
-    private _audioContext: AudioContext | null = null;
-    private _startTime: number = 0;
-    private _lastAudioTime: number = 0;
-    private _timeScale: number = 1.0;
-    private _driftThreshold: number = 0.005; // 5ms drift threshold
+  private static _instance: SyncClock | undefined;
 
-    private constructor() {}
+  private _audioContext: AudioContext | null = null;
+  private _startTime = 0;
+  private _lastAudioTime = 0;
+  private _timeScale = 1;
+  private _lastDelta = 0;
 
-    public static get instance(): SyncClock {
-        if (!SyncClock._instance) {
-            SyncClock._instance = new SyncClock();
-        }
-        return SyncClock._instance;
+  private constructor() {}
+
+  public static get instance(): SyncClock {
+    if (!SyncClock._instance) {
+      SyncClock._instance = new SyncClock();
+    }
+    return SyncClock._instance;
+  }
+
+  /** @internal Test isolation */
+  public static resetForTesting(): void {
+    SyncClock._instance = undefined;
+  }
+
+  /**
+   * Calibrate against the game's AudioContext (call once after context is created).
+   */
+  public calibrate(audioContext: AudioContext): void {
+    this._audioContext = audioContext;
+    const now = audioContext.currentTime;
+    this._startTime = now;
+    this._lastAudioTime = now;
+    this._lastDelta = 0;
+  }
+
+  /**
+   * Align ticker speed with audio progression. Uses raw {@link Ticker#elapsedMS} (wall clock)
+   * so speed correction is stable.
+   */
+  public sync(ticker: Ticker): void {
+    if (!this._audioContext) {
+      this._lastDelta = 0;
+      return;
     }
 
-    /**
-     * Calibrate the clock against an AudioContext
-     */
-    public calibrate(audioContext: AudioContext): void {
-        this._audioContext = audioContext;
-        this._startTime = audioContext.currentTime;
-        this._lastAudioTime = audioContext.currentTime;
-        console.log(`[SyncClock] Calibrated against AudioContext at t=${this._startTime}`);
+    const wallDeltaSec = ticker.elapsedMS / 1000;
+    if (wallDeltaSec <= 0) {
+      this._lastDelta = 0;
+      return;
     }
 
-    /**
-     * Updates the sync between hardware clocks.
-     * Should be called in the Pixi ticker loop.
-     */
-    public sync(ticker: Ticker): void {
-        if (!this._audioContext) return;
+    const audioNow = this._audioContext.currentTime;
+    const audioDelta = audioNow - this._lastAudioTime;
+    this._lastAudioTime = audioNow;
 
-        const currentAudioTime = this._audioContext.currentTime;
-        const audioDelta = currentAudioTime - this._lastAudioTime;
-        
-        // Align ticker speed to match audio passage of time
-        // If audio has moved more than ticker expected, speed up ticker
-        if (audioDelta > 0) {
-            ticker.speed = this._timeScale * (audioDelta / (ticker.deltaMS / 1000));
-        }
+    this._lastDelta = audioDelta;
 
-        this._lastAudioTime = currentAudioTime;
+    const targetSpeed = (audioDelta / wallDeltaSec) * this._timeScale;
+    // If audio didn't advance this frame, keep prior speed (avoids divide-by-zero / NaN).
+    if (Number.isFinite(targetSpeed) && targetSpeed > 0) {
+      ticker.speed = targetSpeed;
     }
+  }
 
-    /**
-     * Sets the global time scale for effects like Micro-Slow-Mo
-     */
-    public setTimeScale(scale: number): void {
-        this._timeScale = scale;
-    }
+  /** Last frame's elapsed time in seconds, derived from the audio clock (rhythm-safe delta). */
+  public getDelta(): number {
+    return this._lastDelta;
+  }
 
-    /**
-     * Get absolute time since calibration (in seconds)
-     */
-    public get currentTime(): number {
-        return this._audioContext ? this._audioContext.currentTime - this._startTime : 0;
-    }
+  /** Seconds since `calibrate()` using the audio timeline. */
+  public getAbsoluteTime(): number {
+    return this._audioContext
+      ? this._audioContext.currentTime - this._startTime
+      : 0;
+  }
 
-    /**
-     * Get the current time scale
-     */
-    public get timeScale(): number {
-        return this._timeScale;
-    }
+  public setTimeScale(scale: number): void {
+    this._timeScale = scale;
+  }
+
+  public get timeScale(): number {
+    return this._timeScale;
+  }
 }
