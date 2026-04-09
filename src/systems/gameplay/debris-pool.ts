@@ -81,6 +81,7 @@ export class DebrisPool {
     this._activeCount--;
 
     debris.tutorialFirstWaveActive = false;
+    debris.goldFragment = false;
     debris.graphics.visible = false;
     this._free.push(debris.poolSlotIndex);
   }

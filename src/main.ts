@@ -1,6 +1,7 @@
 import { Application } from "pixi.js";
 import "./style.css";
 import { CONFIG } from "./config/config.js";
+import { MicroSlowMo } from "./core/micro-slow-mo.js";
 import { SyncClock } from "./core/sync-clock.js";
 import { gameEvents, EVENTS } from "./core/events.js";
 import { initGameplay } from "./bootstrap-gameplay.js";
@@ -70,11 +71,12 @@ function mountStartupError(error: unknown): void {
       window.addEventListener("keydown", resumeAudio);
     }
 
-    const gameplay = initGameplay(app);
+    const gameplay = initGameplay(app, { audioContext: audioCtx });
 
     const onTick = (): void => {
       SyncClock.instance.sync(app.ticker);
       gameplay.update();
+      MicroSlowMo.instance.tick();
     };
     app.ticker.add(onTick);
 

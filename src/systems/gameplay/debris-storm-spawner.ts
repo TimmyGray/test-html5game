@@ -1,11 +1,19 @@
 import { CONFIG } from "../../config/config.js";
 import type { DebrisPool } from "./debris-pool.js";
 import type { DebrisProbe } from "./debris-probe.js";
+import { rollIsGoldFragment } from "./gold-fragment.js";
 
 export interface StormSpawnDims {
   width: number;
   height: number;
 }
+
+export type StormSpawnOpts = {
+  /** When true, storm progression freezes (Story 3.4 shatter / cutscenes). */
+  paused?: boolean;
+  /** Multiplies base spawn interval; lower = faster spawns (Story 3.4 intensity). */
+  intervalScale?: number;
+};
 
 /**
  * Procedural inward storm spawns driven by accumulated `dt` (SyncClock gameplay delta).
@@ -43,14 +51,19 @@ export class DebrisStormSpawner {
   /**
    * Attempt spawns for elapsed time. Uses renderer dimensions for edge positions and center target.
    */
-  public update(dt: number, dims: StormSpawnDims): void {
+  public update(dt: number, dims: StormSpawnDims, opts?: StormSpawnOpts): void {
     if (dt <= 0) {
       return;
     }
-    const interval = CONFIG.DEBRIS_STORM.SPAWN_INTERVAL_SEC;
-    if (interval <= 0) {
+    if (opts?.paused) {
       return;
     }
+    const base = CONFIG.DEBRIS_STORM.SPAWN_INTERVAL_SEC;
+    if (base <= 0) {
+      return;
+    }
+    const scale = opts?.intervalScale ?? 1;
+    const interval = Math.max(1e-9, base * scale);
 
     this._accum += dt;
     const { width: w, height: h } = dims;
@@ -128,7 +141,8 @@ export class DebrisStormSpawner {
 
     const id = debris.id;
     debris.tutorialFirstWaveActive = false;
-    debris.setStormState(id, x, y, fx * speed, fy * speed);
+    const gold = rollIsGoldFragment(rng, CONFIG.GOLD_DEBRIS.SPAWN_CHANCE);
+    debris.setStormState(id, x, y, fx * speed, fy * speed, gold);
   }
 
   /**
@@ -173,6 +187,6 @@ export class DebrisStormSpawner {
 
     const id = debris.id;
     debris.tutorialFirstWaveActive = true;
-    debris.setStormState(id, x, y, fx * speed, fy * speed);
+    debris.setStormState(id, x, y, fx * speed, fy * speed, false);
   }
 }

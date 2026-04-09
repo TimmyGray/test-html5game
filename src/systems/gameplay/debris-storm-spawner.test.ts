@@ -49,6 +49,7 @@ describe("DebrisStormSpawner", () => {
     expect(speed).toBeCloseTo(expected, 6);
     expect(Math.abs(d.vx)).toBeLessThan(1e-6);
     expect(d.vy).toBeGreaterThan(0);
+    expect(d.goldFragment).toBe(false);
   });
 
   it("second spawn uses jitter and full speed range (not tutorial)", () => {
@@ -87,6 +88,54 @@ describe("DebrisStormSpawner", () => {
     expect(inwardAlignment).toBeLessThan(0.9999);
   });
 
+  it("procedural spawn rolls gold from rng after fixed tutorial draw sequence", () => {
+    const parent = new Container();
+    const pool = new DebrisPool(4);
+    pool.mount(parent);
+
+    const draws = [
+      0.5, // tutorial: base speed draw
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.05, // procedural: edge top + x + jitter + speed + gold roll (< SPAWN_CHANCE)
+    ];
+    let qi = 0;
+    const rng = (): number => draws[qi++] ?? 0.99;
+
+    const spawner = new DebrisStormSpawner(pool, rng);
+    const interval = CONFIG.DEBRIS_STORM.SPAWN_INTERVAL_SEC;
+    spawner.update(interval * 2, { width: 800, height: 600 });
+
+    expect(pool.activeCount).toBe(2);
+    expect(pool.activeView()[0]!.goldFragment).toBe(false);
+    expect(pool.activeView()[1]!.goldFragment).toBe(true);
+  });
+
+  it("procedural spawn is not gold when final roll exceeds spawn chance", () => {
+    const parent = new Container();
+    const pool = new DebrisPool(4);
+    pool.mount(parent);
+
+    const draws = [
+      0.5,
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.99, // gold roll fails
+    ];
+    let qi = 0;
+    const rng = (): number => draws[qi++] ?? 0.99;
+
+    const spawner = new DebrisStormSpawner(pool, rng);
+    const interval = CONFIG.DEBRIS_STORM.SPAWN_INTERVAL_SEC;
+    spawner.update(interval * 2, { width: 800, height: 600 });
+
+    expect(pool.activeView()[1]!.goldFragment).toBe(false);
+  });
+
   it("does not consume tutorial spawn when pool is exhausted; applies on next acquire", () => {
     const parent = new Container();
     const pool = new DebrisPool(1);
@@ -104,6 +153,39 @@ describe("DebrisStormSpawner", () => {
     expect(pool.activeCount).toBe(1);
     expect(spawner.tutorialFirstSpawnPending).toBe(false);
     expect(pool.activeView()[0]!.tutorialFirstWaveActive).toBe(true);
+  });
+
+  it("applies intervalScale so smaller scale spawns faster after tutorial", () => {
+    const parent = new Container();
+    const pool = new DebrisPool(8);
+    pool.mount(parent);
+    const spawner = new DebrisStormSpawner(pool, () => 0.5);
+    const base = CONFIG.DEBRIS_STORM.SPAWN_INTERVAL_SEC;
+    const dims = { width: 800, height: 600 };
+    spawner.update(base, dims);
+    expect(pool.activeCount).toBe(1);
+    spawner.update(base, dims, { intervalScale: 0.5 });
+    expect(pool.activeCount).toBe(3);
+    const parentB = new Container();
+    const poolB = new DebrisPool(8);
+    poolB.mount(parentB);
+    const spawnerB = new DebrisStormSpawner(poolB, () => 0.5);
+    spawnerB.update(base, dims);
+    spawnerB.update(base, dims);
+    expect(poolB.activeCount).toBe(2);
+  });
+
+  it("does not advance spawns while paused", () => {
+    const parent = new Container();
+    const pool = new DebrisPool(4);
+    pool.mount(parent);
+    const spawner = new DebrisStormSpawner(pool, () => 0.5);
+    const base = CONFIG.DEBRIS_STORM.SPAWN_INTERVAL_SEC;
+    spawner.update(base, { width: 800, height: 600 });
+    expect(pool.activeCount).toBe(1);
+    spawner.update(base * 3, { width: 800, height: 600 }, { paused: true });
+    expect(pool.activeCount).toBe(1);
+    expect(spawner.accumulatedSeconds).toBeCloseTo(0, 5);
   });
 
   it("defers interval consumption when pool is exhausted", () => {

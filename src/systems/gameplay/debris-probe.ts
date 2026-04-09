@@ -16,6 +16,8 @@ export class DebrisProbe {
   public prevY: number;
   /** True while this probe is the session’s unresolved first-wave tutorial piece */
   public tutorialFirstWaveActive = false;
+  /** Heavy fragment: damped impulse + optional high-velocity reward path (Story 3.3) */
+  public goldFragment = false;
 
   public readonly graphics: Graphics;
 
@@ -35,6 +37,7 @@ export class DebrisProbe {
     this.prevX = this.x;
     this.prevY = this.y;
     this.graphics = new Graphics();
+    this.graphics.eventMode = "none";
     this.redraw();
   }
 
@@ -50,16 +53,19 @@ export class DebrisProbe {
 
   /**
    * Apply impulse from flick (clamped). Mass = 1.
+   * @param impulseScale extra dampening (e.g. gold resistance); default 1
    */
-  public applyImpulse(ix: number, iy: number): void {
+  public applyImpulse(ix: number, iy: number, impulseScale = 1): void {
     const max = CONFIG.FLICK.MAX_IMPULSE;
-    const nx = ix * CONFIG.FLICK.IMPULSE_SCALE;
-    const ny = iy * CONFIG.FLICK.IMPULSE_SCALE;
+    const s =
+      impulseScale > 0 && Number.isFinite(impulseScale) ? impulseScale : 0;
+    const nx = ix * CONFIG.FLICK.IMPULSE_SCALE * s;
+    const ny = iy * CONFIG.FLICK.IMPULSE_SCALE * s;
     const m = Math.hypot(nx, ny);
     if (m > max && m > 0) {
-      const s = max / m;
-      this.vx += nx * s;
-      this.vy += ny * s;
+      const clamp = max / m;
+      this.vx += nx * clamp;
+      this.vy += ny * clamp;
     } else {
       this.vx += nx;
       this.vy += ny;
@@ -71,7 +77,10 @@ export class DebrisProbe {
     const g = this.graphics;
     g.clear();
     g.circle(0, 0, r);
-    g.fill({ color: CONFIG.DEBRIS_PROBE.COLOR, alpha: 1 });
+    const fill = this.goldFragment
+      ? CONFIG.GOLD_DEBRIS.COLOR
+      : CONFIG.DEBRIS_PROBE.COLOR;
+    g.fill({ color: fill, alpha: 1 });
   }
 
   public syncGraphicsPosition(): void {
@@ -99,6 +108,7 @@ export class DebrisProbe {
     y: number,
     vx: number,
     vy: number,
+    goldFragment = false,
   ): void {
     this.id = newId;
     this.x = x;
@@ -107,6 +117,8 @@ export class DebrisProbe {
     this.vy = vy;
     this.prevX = x;
     this.prevY = y;
+    this.goldFragment = goldFragment;
+    this.redraw();
   }
 
   public ensureLoopWrap(width: number, height: number): void {

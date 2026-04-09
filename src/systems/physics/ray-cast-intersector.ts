@@ -57,6 +57,113 @@ export class RayCastIntersector {
       out ?? this._scratchHit,
     );
   }
+
+  public intersectSegmentsThick(
+    flick: Segment2,
+    debrisMotion: Segment2,
+    hitRadius: number,
+    debrisId?: string,
+    out?: SegmentHit,
+  ): SegmentHit | null {
+    return intersectFlickDebrisThick(
+      flick,
+      debrisMotion,
+      hitRadius,
+      this._eps,
+      debrisId,
+      out ?? this._scratchHit,
+    );
+  }
+}
+
+/**
+ * Closest point on segment (ax,ay)→(bx,by) to point (px,py); returns param t∈[0,1] on segment and dist².
+ */
+export function closestPointOnSegmentT(
+  px: number,
+  py: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+): { t: number; d2: number } {
+  const abx = bx - ax;
+  const aby = by - ay;
+  const apx = px - ax;
+  const apy = py - ay;
+  const abLenSq = abx * abx + aby * aby;
+  let t = abLenSq > 1e-12 ? (apx * abx + apy * aby) / abLenSq : 0;
+  t = Math.min(1, Math.max(0, t));
+  const qx = ax + t * abx;
+  const qy = ay + t * aby;
+  const dx = px - qx;
+  const dy = py - qy;
+  return { t, d2: dx * dx + dy * dy };
+}
+
+/**
+ * Thin segment intersection first; else debris “capsule”: closest approach between flick and debris motion
+ * must be within `hitRadius` (world px). Samples debris motion for grazing hits.
+ */
+export function intersectFlickDebrisThick(
+  flick: Segment2,
+  debrisMotion: Segment2,
+  hitRadius: number,
+  eps: number,
+  debrisId: string | undefined,
+  out: SegmentHit,
+): SegmentHit | null {
+  const thin = intersectSegmentsInternal(
+    flick,
+    debrisMotion,
+    eps,
+    debrisId,
+    out,
+  );
+  if (thin !== null) {
+    return thin;
+  }
+
+  const r2 = hitRadius * hitRadius;
+  const cx = debrisMotion.x1;
+  const cy = debrisMotion.y1;
+  const sdx = debrisMotion.x2 - cx;
+  const sdy = debrisMotion.y2 - cy;
+  const samples = 16;
+  const rdx = flick.x2 - flick.x1;
+  const rdy = flick.y2 - flick.y1;
+  const rLen = Math.hypot(rdx, rdy);
+  if (rLen < eps) {
+    return null;
+  }
+
+  for (let i = 0; i <= samples; i++) {
+    const u = i / samples;
+    const px = cx + u * sdx;
+    const py = cy + u * sdy;
+    const { t, d2 } = closestPointOnSegmentT(
+      px,
+      py,
+      flick.x1,
+      flick.y1,
+      flick.x2,
+      flick.y2,
+    );
+    if (d2 <= r2) {
+      const tClamped = Math.min(1, Math.max(0, t));
+      out.hitX = flick.x1 + tClamped * rdx;
+      out.hitY = flick.y1 + tClamped * rdy;
+      out.tFlick = tClamped;
+      out.tDebris = u;
+      out.debrisId = debrisId;
+      const sLen = Math.hypot(sdx, sdy);
+      const invLen = sLen > eps ? 1 / sLen : 0;
+      out.normalX = -sdy * invLen;
+      out.normalY = sdx * invLen;
+      return out;
+    }
+  }
+  return null;
 }
 
 export function intersectSegmentsInternal(

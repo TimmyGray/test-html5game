@@ -1,5 +1,5 @@
 # generated: 2026-04-08T03:52:50+03:00
-# last_updated: 2026-04-08T23:25:00+03:00
+# last_updated: 2026-04-09T18:00:00+03:00
 # project: The Reactive Planet
 # project_key: NOKEY
 # tracking_system: file-system
@@ -28,34 +28,34 @@
 #   - done: Retrospective has been completed
 
 generated: 2026-04-08T03:52:50+03:00
-last_updated: 2026-04-08T23:25:00+03:00
+last_updated: 2026-04-09T18:00:00+03:00
 project: The Reactive Planet
 project_key: NOKEY
 tracking_system: file-system
 story_location: _bmad-output/implementation-artifacts
 
 development_status:
-  epic-1: in-progress
+  epic-1: done
   1-1-the-rhythmic-core-syncclock: done
   1-2-high-fidelity-flick-ray-cast-intersector: done
   1-3-procedural-debris-storm-object-pooling: done
-  1-4-zero-text-onboarding-tutorial-wave: review
+  1-4-zero-text-onboarding-tutorial-wave: done
   epic-1-retrospective: done
-  epic-2: in-progress
-  2-1-the-planetary-heartbeat-uber-shader: ready-for-dev
-  2-2-collision-spectacle-shockwaves-aberration: backlog
-  2-3-micro-slow-mo-particle-ejection: backlog
-  2-4-rhythmic-sfx-feedback-quantizedsfx: backlog
-  epic-2-retrospective: optional
-  epic-3: backlog
-  3-1-atmospheric-health-distress-shader: backlog
-  3-2-the-combo-engine-multipliers: backlog
-  3-3-heavy-fragments-gold-debris: backlog
-  3-4-intensity-stages-the-shatter-fsm: backlog
-  epic-3-retrospective: optional
-  epic-4: backlog
-  4-1-results-overlay-one-more-try: backlog
-  4-2-glados-rank-evaluation: backlog
-  4-3-persistent-high-scores-localstorage: backlog
-  4-4-the-architects-funnel-technical-cta: backlog
+  epic-2: done
+  2-1-the-planetary-heartbeat-uber-shader: done
+  2-2-collision-spectacle-shockwaves-aberration: done
+  2-3-micro-slow-mo-particle-ejection: done
+  2-4-rhythmic-sfx-feedback-quantizedsfx: done
+  epic-2-retrospective: done
+  epic-3: done
+  3-1-atmospheric-health-distress-shader: done
+  3-2-the-combo-engine-multipliers: done
+  3-3-heavy-fragments-gold-debris: done
+  3-4-intensity-stages-the-shatter-fsm: done
+  epic-3-retrospective: done
+  epic-4: in-progress
+  4-1-results-overlay-one-more-try: ready-for-dev
+  4-2-glados-rank-evaluation: ready-for-dev
+  4-3-persistent-high-scores-localstorage: ready-for-dev
+  4-4-the-architects-funnel-technical-cta: ready-for-dev
   epic-4-retrospective: optional

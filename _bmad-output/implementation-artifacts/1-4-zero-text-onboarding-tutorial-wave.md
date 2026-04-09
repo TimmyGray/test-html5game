@@ -1,6 +1,6 @@
 # Story 1.4: Zero-Text Onboarding (Tutorial Wave)
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -89,6 +89,13 @@ Composer (Cursor agent)
 - `DebrisProbe.tutorialFirstWaveActive` gates OOB recycle; cleared on flick hit, planet impact (`pool.release`), or `DebrisPool.release`.
 - Pure helpers in `tutorial-planet-impact.ts` for planet overlap and OOB policy; covered by Vitest.
 
+### Senior Developer Review (AI)
+
+- **Outcome:** Approve  
+- **Date:** 2026-04-08  
+- **Summary:** Acceptance criteria 1–7 verified against `config.ts`, `debris-storm-spawner.ts`, `debris-probe.ts`, `debris-pool.ts`, `bootstrap-gameplay.ts`, and `tutorial-planet-impact.ts`. Tasks marked complete match implementation. Colocated Vitest coverage matches AC #7 (first-spawn math, OOB policy, planet distance).  
+- **Action items:** None  
+
 ### File List
 
 - `src/config/config.ts`
@@ -106,3 +113,4 @@ Composer (Cursor agent)
 
 - 2026-04-08: Story created via `gds-create-story` — ultimate context engine analysis completed; comprehensive developer guide created.
 - 2026-04-08: Implemented zero-text tutorial first wave (config, spawner, probe/pool, bootstrap planet + OOB + flick clear); tests + build green.
+- 2026-04-08: Code review (CR 1.4) — approved; status set to done; sprint synced.

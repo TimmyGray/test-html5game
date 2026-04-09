@@ -50,6 +50,9 @@ export class FlickInputManager {
   private _startY = 0;
   private _lastX = 0;
   private _lastY = 0;
+  private readonly _getTapCastCenter:
+    | (() => { x: number; y: number })
+    | undefined;
 
   private readonly _onDown = (e: FederatedPointerEvent): void => {
     this.onPointerDown(e);
@@ -61,8 +64,12 @@ export class FlickInputManager {
     this.onPointerUp(e);
   };
 
-  public constructor(stage: Container) {
+  public constructor(
+    stage: Container,
+    opts?: { getTapCastCenter?: () => { x: number; y: number } },
+  ) {
     this._stage = stage;
+    this._getTapCastCenter = opts?.getTapCastCenter;
     stage.eventMode = "static";
   }
 
@@ -121,14 +128,27 @@ export class FlickInputManager {
     }
     this._activePointerId = null;
     this.mapLocal(e, this._scratch);
-    const endX = this._scratch.x;
-    const endY = this._scratch.y;
+    let endX = this._scratch.x;
+    let endY = this._scratch.y;
 
-    const dx = endX - this._startX;
-    const dy = endY - this._startY;
-    const dist = Math.hypot(dx, dy);
-    if (dist < CONFIG.FLICK.MIN_SWIPE_PX) {
-      return;
+    let dx = endX - this._startX;
+    let dy = endY - this._startY;
+    let dist = Math.hypot(dx, dy);
+    const minSwipe = CONFIG.FLICK.MIN_SWIPE_PX;
+    const center = this._getTapCastCenter
+      ? this._getTapCastCenter()
+      : { x: this._stage.width * 0.5, y: this._stage.height * 0.5 };
+    if (dist < minSwipe) {
+      const castLen = CONFIG.FLICK.TAP_CAST_LENGTH_PX;
+      if (dist < 1e-3) {
+        dx = center.x - this._startX;
+        dy = center.y - this._startY;
+      }
+      const dlen = Math.hypot(dx, dy);
+      const inv = dlen > 1e-6 ? 1 / dlen : 1;
+      endX = this._startX + dx * inv * castLen;
+      endY = this._startY + dy * inv * castLen;
+      dist = castLen;
     }
 
     const fdx = endX - this._lastX;

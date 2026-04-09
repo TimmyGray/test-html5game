@@ -72,6 +72,18 @@ so that the game maintains a high-energy intensity without performance drops.
 - Keep hit resolution deterministic when multiple debris intersect a flick (for example: nearest by `tDebris` or first valid in stable iteration order). Document chosen policy in code comments.
 - Consider a lightweight active-list iteration strategy to avoid filter/map allocations inside ticker updates.
 
+### Storm balance (`CONFIG` — playtest tuning)
+
+Authoritative values live in `src/config/config.ts` under `DEBRIS_POOL` and `DEBRIS_STORM`. After ship, density was tuned for **moderate** difficulty (between the original high-intensity defaults and a softer “training” profile):
+
+| Constant | Current (moderate) | Notes |
+|----------|--------------------|--------|
+| `DEBRIS_POOL.SIZE` / `MAX_ACTIVE` | **19** | Caps simultaneous storm debris. |
+| `DEBRIS_STORM.SPAWN_INTERVAL_SEC` | **0.77** | Seconds between spawn attempts when under cap. |
+| `DEBRIS_STORM.SPEED_MIN` / `SPEED_MAX` | **81** / **212** | Inward drift speed (px/s), world space. |
+
+Earlier iterations for reference: launch used **40** @ **0.35s** and **90–240** px/s; a softer pass used **14** @ **0.95s** and **72–185** px/s. Re-balance here first, then adjust planet damage or flick forgiveness if pressure is still wrong.
+
 ### Project Structure Notes
 
 - **New files expected:**
@@ -132,6 +144,7 @@ GPT-5.3 Codex
 - Extended `DebrisProbe` with mutable `id` and `setStormState` for pool reuse; OOB recycling returns slots without per-frame allocations in the hot loop.
 - Added colocated tests (`debris-pool`, `debris-storm-spawner`, `storm-hit-resolution`); full `npm test` and `npm run lint` pass.
 - **Code review (2026-04-08):** Documented viewport-centered storm aim in `debris-storm-spawner.ts`; flick latency `console.warn` cooldown now uses wall-clock `performance.now()` in `bootstrap-gameplay.ts`; story File List completed with ticker/build wiring files.
+- **2026-04-09:** Documented moderate storm balance in Dev Notes; `config.ts` set to 19 max active, 0.77s spawn interval, 81–212 px/s speeds after playtest iteration.
 
 ### File List
 
@@ -158,3 +171,4 @@ GPT-5.3 Codex
 - 2026-04-08: Story created and set to **ready-for-dev** with implementation guardrails and anti-regression guidance.
 - 2026-04-08: Implemented procedural storm + pooling; status **review**; sprint status updated.
 - 2026-04-08: Code review follow-ups applied; status **done**; sprint status **done** for this story.
+- 2026-04-09: Recorded **moderate** `DEBRIS_POOL` / `DEBRIS_STORM` tuning in story Dev Notes (values synced to `src/config/config.ts`).

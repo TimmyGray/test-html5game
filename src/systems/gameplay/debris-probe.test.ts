@@ -28,4 +28,17 @@ describe("DebrisProbe", () => {
       CONFIG.FLICK.MAX_IMPULSE + 1e-6,
     );
   });
+
+  it("scales impulse by impulseScale (gold resistance path)", () => {
+    const probe = new DebrisProbe(0, 0);
+    probe.vx = 0;
+    probe.vy = 0;
+    probe.applyImpulse(1, 0, 1);
+    const full = Math.hypot(probe.vx, probe.vy);
+    probe.vx = 0;
+    probe.vy = 0;
+    probe.applyImpulse(1, 0, 0.25);
+    const quarter = Math.hypot(probe.vx, probe.vy);
+    expect(quarter).toBeCloseTo(full * 0.25, 5);
+  });
 });

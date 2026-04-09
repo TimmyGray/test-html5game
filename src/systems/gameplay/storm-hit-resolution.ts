@@ -1,9 +1,12 @@
+import { CONFIG } from "../../config/config.js";
 import type { DebrisProbe } from "./debris-probe.js";
 import type {
   RayCastIntersector,
   Segment2,
   SegmentHit,
 } from "../physics/ray-cast-intersector.js";
+
+const hitRadius = CONFIG.DEBRIS_PROBE.RADIUS + CONFIG.FLICK.HIT_EXTRA_RADIUS_PX;
 
 /**
  * Earliest flick hit; tie-break by debris segment param, then stable `debrisId` (lexicographic).
@@ -21,9 +24,10 @@ export function pickBestStormHit(
   for (let i = 0; i < count; i++) {
     const d = active[i]!;
     d.writeMotionSegment(motionScratch);
-    const hit = intersector.intersectSegments(
+    const hit = intersector.intersectSegmentsThick(
       flick,
       motionScratch,
+      hitRadius,
       d.id,
       candidateScratch,
     );

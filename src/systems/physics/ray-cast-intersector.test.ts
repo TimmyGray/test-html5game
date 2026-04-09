@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   RayCastIntersector,
+  intersectFlickDebrisThick,
   intersectSegmentsInternal,
 } from "./ray-cast-intersector.js";
 
@@ -46,6 +47,33 @@ describe("RayCastIntersector", () => {
     const flick = { x1: 0, y1: 0, x2: 4, y2: 4 };
     const debris = { x1: 2, y1: 2, x2: 2, y2: 2 };
     expect(intersector.intersectSegments(flick, debris)).toBeNull();
+  });
+
+  it("thick hit when parallel segments are within debris radius", () => {
+    const intersector = new RayCastIntersector(1e-7);
+    const flick = { x1: 0, y1: 50, x2: 100, y2: 50 };
+    const debris = { x1: 50, y1: -20, x2: 50, y2: 20 };
+    expect(intersector.intersectSegments(flick, debris)).toBeNull();
+    const hit = intersector.intersectSegmentsThick(flick, debris, 46, "d1");
+    expect(hit).not.toBeNull();
+    expect(hit!.debrisId).toBe("d1");
+  });
+
+  it("thick wrapper returns null when too far", () => {
+    const scratch = {
+      hitX: 0,
+      hitY: 0,
+      tFlick: 0,
+      tDebris: 0,
+      debrisId: undefined as string | undefined,
+      normalX: 0,
+      normalY: 0,
+    };
+    const flick = { x1: 0, y1: 0, x2: 10, y2: 0 };
+    const debris = { x1: 100, y1: 100, x2: 100, y2: 200 };
+    expect(
+      intersectFlickDebrisThick(flick, debris, 10, 1e-7, "x", scratch),
+    ).toBeNull();
   });
 
   it("uses shared internal helper without NaN", () => {
