@@ -107,6 +107,11 @@ export const CONFIG = Object.freeze({
     CLIMAX_AT_ELAPSED_SEC: 20,
     /** Design reference for a full pressure cycle (balance / docs). */
     SESSION_DESIGN_SEC: 30,
+    /**
+     * Survive with health > 0 through this elapsed session time (SyncClock audio sec) to latch victory (Story 4.1).
+     * Matches design-session length so climax pressure resolves into a clear win state.
+     */
+    VICTORY_AT_ELAPSED_SEC: 30,
     ARRIVAL: Object.freeze({
       SPAWN_INTERVAL_SCALE: 1,
       OSCILLATION_INTENSITY: 1,
@@ -198,6 +203,8 @@ export const CONFIG = Object.freeze({
     INTENSITY_STAGE_CHANGED: "intensity_stage_changed",
     /** Story 3.4: one-shot when atmosphere hits zero (Epic 4 overlays) */
     PLANET_SHATTERED: "planet_shattered",
+    /** Story 4.1: session ended (victory or shatter) — authoritative outcome for results UI */
+    SESSION_ENDED: "session_ended",
   },
   /** Flick input, velocity buffer, ray-cast (Story 1.2) */
   FLICK: {

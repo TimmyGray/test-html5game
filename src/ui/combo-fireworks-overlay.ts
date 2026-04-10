@@ -163,6 +163,36 @@ export class ComboFireworksOverlay {
     this.root.destroy({ children: true });
   }
 
+  /**
+   * Purpose: Story 4.1 “One More Try” — clear combo VFX so replay does not inherit sparks/label timers.
+   * Inputs: none; safe while mounted (no event-bus emits).
+   * Outputs: delayed second burst cancelled; all pool slots idle; label hidden.
+   * Side effects: writes particle arrays + Pixi nodes; one `particleContainer.update()`.
+   * Failure modes: none thrown.
+   */
+  public resetSession(): void {
+    this.pendingSecondBurst = false;
+    this.delayedBurstSec = 0;
+    this.labelLifeSec = 0;
+    this.labelVelY = 0;
+    this.label.text = "";
+    this.label.alpha = 0;
+
+    const n = this.particles.length;
+    for (let i = 0; i < n; i++) {
+      this.life[i] = 0;
+      this.vx[i] = 0;
+      this.vy[i] = 0;
+      this.spin[i] = 0;
+      const p = this.particles[i]!;
+      p.alpha = 0;
+      p.x = -10_000;
+      p.y = -10_000;
+    }
+    this.needsParticleUpdate = true;
+    this.particleContainer.update();
+  }
+
   private armDelayedSecondBurst(cx: number, cy: number): void {
     this.delayedX = cx;
     this.delayedY = cy;

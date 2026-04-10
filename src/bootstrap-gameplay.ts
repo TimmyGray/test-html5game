@@ -15,6 +15,7 @@ import {
   gameEvents,
   EVENTS,
   type AsteroidHitPayload,
+  type SessionEndedPayload,
 } from "./core/events.js";
 import { IntensityShatterFsm } from "./core/intensity-shatter-fsm.js";
 import { MicroSlowMo } from "./core/micro-slow-mo.js";
@@ -94,6 +95,13 @@ function isStormOutOfView(
 
 /**
  * Story 1.3: pooled storm debris + Story 1.2 flick / CCD pipeline.
+ * Story 4.1: exposes `resetSession` for replay without tearing down Pixi; emits `SESSION_ENDED` on victory/shatter.
+ *
+ * Purpose: bootstrap all gameplay singletons for one mount lifetime.
+ * Inputs: Pixi `Application`, optional `AudioContext` for quantized SFX.
+ * Outputs: `{ update, destroy, resetSession }` — call `update` from ticker; `resetSession` for “One More Try”.
+ * Side effects: registers stage listeners and event-bus handlers until `destroy`.
+ * Failure modes: none thrown during init; pool/spawner assume valid renderer dimensions on first tick.
  */
 export function initGameplay(
   app: Application,
@@ -101,6 +109,7 @@ export function initGameplay(
 ): {
   update: () => void;
   destroy: () => void;
+  resetSession: () => void;
 } {
   const heartbeatDebug = isHeartbeatDebug();
 
@@ -315,7 +324,8 @@ export function initGameplay(
     }
 
     const intensitySync = intensityFsm.sync(elapsedSessionSec, atmosphericHp);
-    pendingStormPaused = intensitySync.phase === "shatter";
+    pendingStormPaused =
+      intensitySync.phase === "shatter" || intensitySync.phase === "victory";
     pendingSpawnIntervalScale = intensitySync.spawnIntervalScale;
     intensityOscillationMul = intensitySync.oscillationIntensity;
     intensitySpectacleMul = intensitySync.spectacleIntensity;
@@ -326,8 +336,20 @@ export function initGameplay(
         elapsedSessionSec,
       });
     }
+    if (intensitySync.enteredVictory) {
+      const endedVictory: SessionEndedPayload = {
+        outcome: "victory",
+        elapsedSessionSec,
+      };
+      gameEvents.emit(EVENTS.SESSION_ENDED, endedVictory);
+    }
     if (intensitySync.enteredShatter) {
       gameEvents.emit(EVENTS.PLANET_SHATTERED, { elapsedSessionSec });
+      const endedShatter: SessionEndedPayload = {
+        outcome: "shatter",
+        elapsedSessionSec,
+      };
+      gameEvents.emit(EVENTS.SESSION_ENDED, endedShatter);
     }
 
     const nBeforeSpawn = pool.activeCount;
@@ -568,6 +590,35 @@ export function initGameplay(
     }
   };
 
+  const resetSession = (): void => {
+    atmosphericHp = CONFIG.ATMOSPHERIC_HEALTH.MAX;
+    atmosphericDisplay01 = 1;
+    comboTracker.resetSession();
+    comboFireworks.resetSession();
+    intensityFsm.reset();
+    sessionAudioStart = -1;
+    pendingStormPaused = false;
+    pendingSpawnIntervalScale = 1;
+    intensityOscillationMul = 1;
+    intensitySpectacleMul = 1;
+    collisionSpectacle.setSpectacleIntensityMultiplier(1);
+    collisionSpectacle.dispose();
+    spawner.reset();
+    pool.releaseAllActive();
+    impactParticles.clearBurstState();
+    MicroSlowMo.instance.clearSessionWindow();
+
+    pendingHead = 0;
+    pendingTail = 0;
+    pendingCount = 0;
+    for (let i = 0; i < PENDING_FLICK_CAPACITY; i++) {
+      pendingQueue[i] = null;
+    }
+
+    debugRay.clear();
+    debugRayTtl = 0;
+  };
+
   const destroy = (): void => {
     gameEvents.off(EVENTS.FLICK_COMMIT, onCommit);
     gameEvents.off(EVENTS.ASTEROID_HIT, onAsteroidHit);
@@ -590,5 +641,5 @@ export function initGameplay(
     debugRay.destroy();
   };
 
-  return { update, destroy };
+  return { update, destroy, resetSession };
 }

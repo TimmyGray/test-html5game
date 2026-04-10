@@ -2,7 +2,7 @@ import { CONFIG } from "../config/config.js";
 
 export type IntensityStage = "arrival" | "flow" | "climax";
 
-export type IntensityShatterPhase = "playing" | "shatter";
+export type IntensityShatterPhase = "playing" | "victory" | "shatter";
 
 /**
  * Session pacing + fail-state bridge (Story 3.4).
@@ -59,10 +59,12 @@ export function spectacleIntensityForStage(stage: IntensityStage): number {
 
 export type IntensityShatterSyncResult = {
   phase: IntensityShatterPhase;
-  /** Stage implied by session time while playing; meaningless once shatter begins. */
+  /** Stage implied by session time while playing; frozen at latch for victory/shatter. */
   stage: IntensityStage;
   stageChanged: boolean;
   enteredShatter: boolean;
+  /** One-shot when survival time threshold is met with health remaining (Story 4.1). */
+  enteredVictory: boolean;
   spawnIntervalScale: number;
   oscillationIntensity: number;
   spectacleIntensity: number;
@@ -72,11 +74,13 @@ export class IntensityShatterFsm {
   private _phase: IntensityShatterPhase = "playing";
   private _stage: IntensityStage = "arrival";
   private _shatterLatched = false;
+  private _victoryLatched = false;
 
   public reset(): void {
     this._phase = "playing";
     this._stage = "arrival";
     this._shatterLatched = false;
+    this._victoryLatched = false;
   }
 
   public get phase(): IntensityShatterPhase {
@@ -89,7 +93,8 @@ export class IntensityShatterFsm {
 
   /**
    * Call after atmospheric health mutations for the tick.
-   * Time advances {@link _stage} while playing; health ≤ 0 latches shatter once (idempotent).
+   * Time advances {@link _stage} while playing; health ≤ 0 latches shatter once (idempotent);
+   * elapsed ≥ `VICTORY_AT_ELAPSED_SEC` with health > 0 latches victory once (Story 4.1).
    */
   public sync(
     elapsedSessionSec: number,
@@ -101,6 +106,20 @@ export class IntensityShatterFsm {
         stage: this._stage,
         stageChanged: false,
         enteredShatter: false,
+        enteredVictory: false,
+        spawnIntervalScale: spawnIntervalScaleForStage(this._stage),
+        oscillationIntensity: oscillationIntensityForStage(this._stage),
+        spectacleIntensity: spectacleIntensityForStage(this._stage),
+      };
+    }
+
+    if (this._phase === "victory") {
+      return {
+        phase: "victory",
+        stage: this._stage,
+        stageChanged: false,
+        enteredShatter: false,
+        enteredVictory: false,
         spawnIntervalScale: spawnIntervalScaleForStage(this._stage),
         oscillationIntensity: oscillationIntensityForStage(this._stage),
         spectacleIntensity: spectacleIntensityForStage(this._stage),
@@ -120,6 +139,27 @@ export class IntensityShatterFsm {
         stage: this._stage,
         stageChanged,
         enteredShatter: true,
+        enteredVictory: false,
+        spawnIntervalScale: spawnIntervalScaleForStage(this._stage),
+        oscillationIntensity: oscillationIntensityForStage(this._stage),
+        spectacleIntensity: spectacleIntensityForStage(this._stage),
+      };
+    }
+
+    const victoryAt = CONFIG.INTENSITY_STAGES.VICTORY_AT_ELAPSED_SEC;
+    if (
+      elapsedSessionSec >= victoryAt &&
+      healthAfterImpacts > 0 &&
+      !this._victoryLatched
+    ) {
+      this._victoryLatched = true;
+      this._phase = "victory";
+      return {
+        phase: "victory",
+        stage: this._stage,
+        stageChanged,
+        enteredShatter: false,
+        enteredVictory: true,
         spawnIntervalScale: spawnIntervalScaleForStage(this._stage),
         oscillationIntensity: oscillationIntensityForStage(this._stage),
         spectacleIntensity: spectacleIntensityForStage(this._stage),
@@ -131,6 +171,7 @@ export class IntensityShatterFsm {
       stage: this._stage,
       stageChanged,
       enteredShatter: false,
+      enteredVictory: false,
       spawnIntervalScale: spawnIntervalScaleForStage(this._stage),
       oscillationIntensity: oscillationIntensityForStage(this._stage),
       spectacleIntensity: spectacleIntensityForStage(this._stage),

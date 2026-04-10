@@ -94,4 +94,13 @@ describe("ComboTracker", () => {
     expect(c.consecutiveSuccessfulHits).toBe(5);
     expect(c.getMultiplier()).toBe(16);
   });
+
+  it("resetSession clears streak without emitting", () => {
+    const c = new ComboTracker(STEPS);
+    c.notifySuccessfulDeflection();
+    expect(c.getMultiplier()).toBe(2);
+    c.resetSession();
+    expect(c.getMultiplier()).toBe(1);
+    expect(c.consecutiveSuccessfulHits).toBe(0);
+  });
 });

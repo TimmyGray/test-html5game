@@ -5,6 +5,7 @@ import { MicroSlowMo } from "./core/micro-slow-mo.js";
 import { SyncClock } from "./core/sync-clock.js";
 import { gameEvents, EVENTS } from "./core/events.js";
 import { initGameplay } from "./bootstrap-gameplay.js";
+import { ResultsOverlayController } from "./ui/results-overlay.js";
 
 const makeInitOptions = (preference: "webgpu" | "webgl") => ({
   backgroundColor: CONFIG.SCREEN.BACKGROUND_COLOR,
@@ -73,6 +74,11 @@ function mountStartupError(error: unknown): void {
 
     const gameplay = initGameplay(app, { audioContext: audioCtx });
 
+    const appHost = document.getElementById("app") ?? document.body;
+    const resultsOverlay = new ResultsOverlayController(appHost, () => {
+      gameplay.resetSession();
+    });
+
     const onTick = (): void => {
       SyncClock.instance.sync(app.ticker);
       gameplay.update();
@@ -94,6 +100,7 @@ function mountStartupError(error: unknown): void {
       "beforeunload",
       () => {
         app.ticker.remove(onTick);
+        resultsOverlay.dispose();
         gameplay.destroy();
       },
       { once: true },

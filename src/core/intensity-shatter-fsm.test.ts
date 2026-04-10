@@ -50,12 +50,8 @@ describe("IntensityShatterFsm", () => {
     r = fsm.sync(flow, 100);
     expect(r.stage).toBe("flow");
     expect(r.stageChanged).toBe(true);
-    expect(r.spawnIntervalScale).toBe(
-      spawnIntervalScaleForStage("flow"),
-    );
-    expect(r.oscillationIntensity).toBe(
-      oscillationIntensityForStage("flow"),
-    );
+    expect(r.spawnIntervalScale).toBe(spawnIntervalScaleForStage("flow"));
+    expect(r.oscillationIntensity).toBe(oscillationIntensityForStage("flow"));
     expect(r.spectacleIntensity).toBe(spectacleIntensityForStage("flow"));
 
     r = fsm.sync(flow + 1, 100);
@@ -91,5 +87,37 @@ describe("IntensityShatterFsm", () => {
     expect(fsm.stage).toBe("arrival");
     const r = fsm.sync(6, 100);
     expect(r.stage).toBe("flow");
+  });
+
+  it("enters victory when session time reaches victory threshold with health remaining", () => {
+    const v = CONFIG.INTENSITY_STAGES.VICTORY_AT_ELAPSED_SEC;
+    const r = fsm.sync(v, 100);
+    expect(r.phase).toBe("victory");
+    expect(r.enteredVictory).toBe(true);
+    expect(r.enteredShatter).toBe(false);
+  });
+
+  it("prioritizes shatter over victory when health is zero at the same threshold", () => {
+    const v = CONFIG.INTENSITY_STAGES.VICTORY_AT_ELAPSED_SEC;
+    const r = fsm.sync(v, 0);
+    expect(r.phase).toBe("shatter");
+    expect(r.enteredShatter).toBe(true);
+    expect(r.enteredVictory).toBe(false);
+  });
+
+  it("victory latch is idempotent", () => {
+    const v = CONFIG.INTENSITY_STAGES.VICTORY_AT_ELAPSED_SEC;
+    expect(fsm.sync(v, 100).enteredVictory).toBe(true);
+    const r2 = fsm.sync(v + 10, 100);
+    expect(r2.phase).toBe("victory");
+    expect(r2.enteredVictory).toBe(false);
+  });
+
+  it("reset restores victory to playable state", () => {
+    const v = CONFIG.INTENSITY_STAGES.VICTORY_AT_ELAPSED_SEC;
+    fsm.sync(v, 100);
+    expect(fsm.phase).toBe("victory");
+    fsm.reset();
+    expect(fsm.sync(0, 100).phase).toBe("playing");
   });
 });

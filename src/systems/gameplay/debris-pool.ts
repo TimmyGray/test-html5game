@@ -65,6 +65,18 @@ export class DebrisPool {
   /**
    * Return a live instance to the pool. No-op if not currently active (caller bug).
    */
+  /**
+   * Purpose: return every active storm piece to the free list (Story 4.1 session reset).
+   * Inputs: none; uses `activeView` order.
+   * Outputs: `activeCount` becomes 0; no allocations.
+   */
+  public releaseAllActive(): void {
+    while (this._activeCount > 0) {
+      const d = this._active[0]!;
+      this.release(d);
+    }
+  }
+
   public release(debris: DebrisProbe): void {
     const idx = debris.poolActiveIndex;
     if (idx < 0) {

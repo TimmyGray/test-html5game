@@ -55,6 +55,17 @@ export class MicroSlowMo {
     return this.remainingSec;
   }
 
+  /**
+   * Purpose: restore normal time scale when starting a fresh session (Story 4.1 replay).
+   * Inputs: clock defaults to `SyncClock.instance`.
+   * Outputs: clears hit-stop window; `clock` time scale set to 1.
+   */
+  public clearSessionWindow(clock: SyncClock = SyncClock.instance): void {
+    this.windowEndSec = Number.NEGATIVE_INFINITY;
+    this.remainingSec = 0;
+    clock.setTimeScale(1);
+  }
+
   private apply(clock: SyncClock): void {
     const now = clock.getAbsoluteTime();
     const audioRemaining = Math.max(0, this.windowEndSec - now);

@@ -203,6 +203,23 @@ export class ImpactParticleBurst {
     this.needsParticleUpdate = true;
   }
 
+  /**
+   * Purpose: kill all shard visuals for session reset without destroying Pixi resources.
+   * Inputs: none; reuses existing pools.
+   * Outputs: particles hidden; lives cleared.
+   */
+  public clearBurstState(): void {
+    const n = this.particles.length;
+    for (let i = 0; i < n; i++) {
+      this.life[i] = 0;
+      const p = this.particles[i]!;
+      p.alpha = 0;
+      p.x = -10_000;
+      p.y = -10_000;
+    }
+    this.needsParticleUpdate = true;
+  }
+
   public update(dt: number): void {
     if (dt <= 0) {
       return;

@@ -42,4 +42,10 @@ export type PlanetShatteredPayload = {
   elapsedSessionSec: number;
 };
 
+/** Story 4.1: single emission when the run resolves (victory or shatter). */
+export type SessionEndedPayload = {
+  outcome: "victory" | "shatter";
+  elapsedSessionSec: number;
+};
+
 export type { ComboChangedPayload };

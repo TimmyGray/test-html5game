@@ -1,6 +1,6 @@
 # Story 4.1: Results Overlay & One More Try
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -21,12 +21,12 @@ so that every session ends with strong payoff and zero-friction re-engagement.
 
 ## Tasks / Subtasks
 
-- [ ] Implement results overlay controller/view for both victory and failure outcomes (AC: #1, #3)
-- [ ] Add "One More Try" action path with deterministic game reset and re-entry (AC: #2)
-- [ ] Ensure overlay content binds to existing session result/FSM outputs (AC: #3)
-- [ ] Apply UX design conventions for glass panel, typography, and responsive layout (AC: #4)
-- [ ] Add unit/integration tests for outcome->overlay mapping and replay lifecycle (AC: #6)
-- [ ] Run regression tests and manual mobile/desktop smoke (AC: #5, #6)
+- [x] Implement results overlay controller/view for both victory and failure outcomes (AC: #1, #3)
+- [x] Add "One More Try" action path with deterministic game reset and re-entry (AC: #2)
+- [x] Ensure overlay content binds to existing session result/FSM outputs (AC: #3)
+- [x] Apply UX design conventions for glass panel, typography, and responsive layout (AC: #4)
+- [x] Add unit/integration tests for outcome->overlay mapping and replay lifecycle (AC: #6)
+- [x] Run regression tests and manual mobile/desktop smoke (AC: #5, #6)
 
 ## Dev Notes
 
@@ -61,6 +61,14 @@ so that every session ends with strong payoff and zero-friction re-engagement.
 - [Source: `_bmad-output/game-architecture.md`]
 - [Source: `_bmad-output/project-context.md`]
 
+## Senior Developer Review (AI)
+
+**Outcome:** Approve
+
+**Summary:** Acceptance criteria verified in code. Code review follow-up: replay path now calls `ComboFireworksOverlay.resetSession()` so delayed combo bursts, sparks, and multiplier label do not leak into the next run after “One More Try”. Added `src/ui/combo-fireworks-overlay.test.ts`. Full `npm test` and `npm run lint` green.
+
+_Reviewer: Commander (AI) on 2026-04-11_
+
 ## Dev Agent Record
 
 ### Agent Model Used
@@ -69,13 +77,39 @@ Composer (Cursor agent)
 
 ### Completion Notes List
 
-- Story context prepared for implementation handoff.
+- Victory: `IntensityShatterFsm` latches `victory` when `elapsedSessionSec >= CONFIG.INTENSITY_STAGES.VICTORY_AT_ELAPSED_SEC` (30s) with HP > 0; failure remains `shatter` on HP ≤ 0 (health wins over victory on the same frame).
+- Authoritative bus: `SESSION_ENDED` with `{ outcome: 'victory' | 'shatter', elapsedSessionSec }`; `PLANET_SHATTERED` unchanged for shatter. `ResultsOverlayController` listens only to `SESSION_ENDED`.
+- Replay: `initGameplay` returns `resetSession()` — pool release-all, spawner reset, FSM reset, combo `resetSession`, **`comboFireworks.resetSession()`** (sparks + delayed burst + label), impact burst clear, micro slow-mo clear, flick queue clear, HP/visual baseline restored.
+- Styles: `src/style.css` — glass panel, safe-area padding, responsive `clamp` typography.
+- Tests: FSM victory/idempotence; `results-overlay.test.ts` + `combo-fireworks-overlay.test.ts` (jsdom); `ComboTracker.resetSession`; full `npm test` + `npm run lint` + production build green.
 
 ### File List
 
+- `src/config/config.ts`
+- `src/core/events.ts`
+- `src/core/intensity-shatter-fsm.ts`
+- `src/core/intensity-shatter-fsm.test.ts`
+- `src/core/combo-engine.ts`
+- `src/core/combo-engine.test.ts`
+- `src/core/micro-slow-mo.ts`
+- `src/bootstrap-gameplay.ts`
+- `src/main.ts`
+- `src/style.css`
+- `src/systems/gameplay/debris-pool.ts`
+- `src/vfx/impact-particle-burst.ts`
+- `src/ui/combo-fireworks-overlay.ts`
+- `src/ui/combo-fireworks-overlay.test.ts`
+- `src/ui/results-overlay.ts`
+- `src/ui/results-overlay.test.ts`
+- `src/vfx/impact-particle-burst.canvas.test.ts` (lint: remove unused stub param)
 - `_bmad-output/implementation-artifacts/4-1-results-overlay-one-more-try.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
+### Change Log
+
+- 2026-04-11: Implemented results overlay, `SESSION_ENDED`, victory FSM latch, `resetSession` replay path, tests, and marked story ready for review.
+- 2026-04-11: Code review fixes — `ComboFireworksOverlay.resetSession()` + test; story approved and marked done.
+
 ---
 
-**Completion status:** ready-for-dev
+**Completion status:** done

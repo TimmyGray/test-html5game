@@ -70,4 +70,13 @@ export class ComboTracker {
     this.streak = 0;
     return { consecutiveSuccessfulHits: 0, multiplier: 1 };
   }
+
+  /**
+   * Purpose: deterministic new-run baseline without emitting `COMBO_CHANGED` (Story 4.1 replay).
+   * Inputs: none; assumes caller owns HUD/overlay reset.
+   * Outputs: streak forced to 0; no side effects on event bus.
+   */
+  resetSession(): void {
+    this.streak = 0;
+  }
 }

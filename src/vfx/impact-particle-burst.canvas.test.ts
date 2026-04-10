@@ -1,10 +1,23 @@
 // @vitest-environment jsdom
 
+import type { Particle } from "pixi.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CONFIG } from "../config/config.js";
 
 const METALLIC_TINTS = new Set<number>([0xffe066, 0xcfd8dc, 0xffb74d]);
 const STANDARD_TINTS = new Set<number>([0xffcc88, 0xaaeeff, 0xffffff]);
+
+/**
+ * Purpose: assert burst tint/position without adding test hooks on `ImpactParticleBurst`.
+ * Inputs: burst instance (private `particles` is the same refs as the container pool).
+ * Outputs: readonly particle array; failure modes: none (compile-time cast only).
+ */
+function particlePool(
+  burst: import("./impact-particle-burst.js").ImpactParticleBurst,
+): readonly Particle[] {
+  return (burst as unknown as { readonly particles: readonly Particle[] })
+    .particles;
+}
 
 describe("ImpactParticleBurst canvas paths (Pixi texture bootstrap)", () => {
   let origGetContext: typeof HTMLCanvasElement.prototype.getContext;
@@ -14,16 +27,16 @@ describe("ImpactParticleBurst canvas paths (Pixi texture bootstrap)", () => {
     origGetContext = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (
       this: HTMLCanvasElement,
-      type?: string,
-    ) {
-      if (type === "2d") {
+      contextId: string,
+    ): CanvasRenderingContext2D | null {
+      if (contextId === "2d") {
         return {
           fillStyle: "",
           fillRect: () => {},
         } as unknown as CanvasRenderingContext2D;
       }
       return null;
-    };
+    } as typeof HTMLCanvasElement.prototype.getContext;
     burstMod = await import("./impact-particle-burst.js");
   });
 
@@ -38,7 +51,7 @@ describe("ImpactParticleBurst canvas paths (Pixi texture bootstrap)", () => {
     const expected = Math.min(want, CONFIG.PARTICLE_EJECTION.MAX_NEW_PER_BURST);
     burst.burstMetallicAt(120, 240, rng);
     let active = 0;
-    for (const p of burst.particles) {
+    for (const p of particlePool(burst)) {
       if (p.alpha >= 0.99 && p.x > -9000) {
         active++;
         expect(METALLIC_TINTS.has(p.color as number)).toBe(true);
@@ -52,7 +65,7 @@ describe("ImpactParticleBurst canvas paths (Pixi texture bootstrap)", () => {
     const rng = (): number => 0.5;
     burst.burstAt(120, 240, rng);
     let sawStandard = false;
-    for (const p of burst.particles) {
+    for (const p of particlePool(burst)) {
       if (p.alpha >= 0.99 && p.x > -9000) {
         expect(METALLIC_TINTS.has(p.color as number)).toBe(false);
         expect(STANDARD_TINTS.has(p.color as number)).toBe(true);
