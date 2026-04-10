@@ -157,6 +157,17 @@ body {
     text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
 }
 
+/* Story 4.4: stacked primary replay + secondary technical CTA */
+.rp-results-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    width: 100%;
+    max-width: 18rem;
+    margin: 0 auto;
+}
+
 .rp-results-cta {
     display: inline-block;
     min-width: 12rem;
@@ -184,4 +195,45 @@ body {
 
 .rp-results-cta:active {
     transform: translateY(1px);
+}
+
+.rp-results-cta-architect {
+    display: inline-block;
+    min-width: 12rem;
+    padding: 0.65rem 1.2rem;
+    border: 1px solid rgba(180, 220, 255, 0.45);
+    border-radius: 999px;
+    cursor: pointer;
+    font-family:
+        "Segoe UI",
+        system-ui,
+        sans-serif;
+    font-weight: 700;
+    font-size: clamp(0.88rem, 2.8vw, 0.98rem);
+    letter-spacing: 0.05em;
+    color: rgba(220, 240, 255, 0.95);
+    background: rgba(12, 22, 36, 0.55);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+}
+
+.rp-results-cta-architect:hover {
+    background: rgba(24, 40, 58, 0.72);
+    border-color: rgba(200, 235, 255, 0.55);
+}
+
+.rp-results-cta-architect:focus-visible {
+    outline: 2px solid rgba(140, 210, 255, 0.95);
+    outline-offset: 3px;
+}
+
+.rp-results-architect-hint {
+    margin: 0;
+    font-family:
+        "Segoe UI",
+        system-ui,
+        sans-serif;
+    font-size: clamp(0.78rem, 2.5vw, 0.88rem);
+    line-height: 1.4;
+    color: rgba(255, 220, 180, 0.95);
+    text-align: center;
 }

@@ -1,3 +1,4 @@
+import { CONFIG } from "../config/config.js";
 import { buildGladosEvaluationLine } from "../core/glados-evaluation.js";
 import {
   gameEvents,
@@ -5,13 +6,14 @@ import {
   type SessionEndedPayload,
 } from "../core/events.js";
 import { readStoredHighScore } from "../core/high-score-storage.js";
+import { openArchitectNotesInNewTab } from "./open-architect-notes.js";
 
 /**
- * Purpose: DOM results surface for Story 4.1 (glass panel + safe-area + replay CTA); Story 4.2 GLaDOS line; Story 4.3 score + best.
+ * Purpose: DOM results surface for Story 4.1 (glass panel + safe-area + replay CTA); Story 4.2 GLaDOS line; Story 4.3 score + best; Story 4.4 Architect's Notes.
  * Run/Best numbers use `en-US` grouping to match `mountHighScoreLandingLabel` in `main.ts`.
  * Inputs: mount host (typically `#app`), replay callback; subscribes to `SESSION_ENDED` only.
  * Outputs: shows/hides overlay; outcome + stats come from payload — overlay does not recompute session state.
- * Side effects: mutates DOM; registers one event listener until `dispose`.
+ * Side effects: mutates DOM; registers listeners until `dispose`.
  * Failure modes: missing host throws; replay throws propagate to caller.
  * CSS: `.rp-results-root` uses `display:flex`; pair with `.rp-results-root[hidden]{display:none !important}`
  * or `[hidden]` will not visually hide (author `display` wins over the attribute alone).
@@ -26,7 +28,10 @@ export class ResultsOverlayController {
   private readonly _stats: HTMLParagraphElement;
   private readonly _body: HTMLParagraphElement;
   private readonly _glados: HTMLParagraphElement;
+  private readonly _actions: HTMLDivElement;
   private readonly _cta: HTMLButtonElement;
+  private readonly _architectCta: HTMLButtonElement;
+  private readonly _architectHint: HTMLParagraphElement;
   private readonly _onSessionEnded = (p: SessionEndedPayload): void => {
     this.show(p);
   };
@@ -57,6 +62,9 @@ export class ResultsOverlayController {
     this._glados = document.createElement("p");
     this._glados.className = "rp-results-glados";
 
+    this._actions = document.createElement("div");
+    this._actions.className = "rp-results-actions";
+
     this._cta = document.createElement("button");
     this._cta.type = "button";
     this._cta.className = "rp-results-cta";
@@ -66,11 +74,33 @@ export class ResultsOverlayController {
       this._onReplay();
     });
 
+    this._architectCta = document.createElement("button");
+    this._architectCta.type = "button";
+    this._architectCta.className = "rp-results-cta-architect";
+    this._architectCta.textContent = "Architect's Notes";
+    this._architectCta.setAttribute(
+      "aria-label",
+      "Architect's Notes — opens technical documentation in a new tab",
+    );
+    this._architectCta.addEventListener("click", () => {
+      void this._onArchitectNotesClick();
+    });
+
+    this._architectHint = document.createElement("p");
+    this._architectHint.className = "rp-results-architect-hint";
+    this._architectHint.setAttribute("role", "status");
+    this._architectHint.setAttribute("aria-live", "polite");
+    this._architectHint.hidden = true;
+
+    this._actions.appendChild(this._cta);
+    this._actions.appendChild(this._architectCta);
+    this._actions.appendChild(this._architectHint);
+
     this._panel.appendChild(this._title);
     this._panel.appendChild(this._stats);
     this._panel.appendChild(this._body);
     this._panel.appendChild(this._glados);
-    this._panel.appendChild(this._cta);
+    this._panel.appendChild(this._actions);
 
     this._root = document.createElement("div");
     this._root.className = "rp-results-root";
@@ -102,8 +132,19 @@ export class ResultsOverlayController {
       ? "You held the line through the full pressure cycle. The planet still beats."
       : "The atmosphere broke. Regroup and deflect with the rhythm.";
     this._glados.textContent = buildGladosEvaluationLine(payload);
+    this._architectHint.textContent = "";
+    this._architectHint.hidden = true;
     this._root.hidden = false;
     this._backdrop.hidden = false;
+  }
+
+  private async _onArchitectNotesClick(): Promise<void> {
+    const url = CONFIG.RESULTS.ARCHITECT_NOTES_URL;
+    const result = await openArchitectNotesInNewTab(url);
+    if (!result.opened) {
+      this._architectHint.textContent = result.hint;
+      this._architectHint.hidden = false;
+    }
   }
 
   private hide(): void {

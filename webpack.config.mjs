@@ -100,6 +100,11 @@ export default (_env, argv) => {
         maxChunks: 1,
       }),
       ...(!isDevelopment ? [new HtmlInlineScriptPlugin()] : []),
+
+      /** Story 4.4: override `TRP_ARCHITECT_NOTES_URL` in env for deploy-specific portfolio/docs URL. */
+      new webpack.EnvironmentPlugin({
+        TRP_ARCHITECT_NOTES_URL: "https://github.com/TimmyGray/test-html5game",
+      }),
     ],
   };
 };

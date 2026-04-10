@@ -1,5 +1,5 @@
 # generated: 2026-04-08T03:52:50+03:00
-# last_updated: 2026-04-11T22:50:00+03:00
+# last_updated: 2026-04-12T12:00:00+03:00
 # project: The Reactive Planet
 # project_key: NOKEY
 # tracking_system: file-system
@@ -28,7 +28,7 @@
 #   - done: Retrospective has been completed
 
 generated: 2026-04-08T03:52:50+03:00
-last_updated: 2026-04-11T22:50:00+03:00
+last_updated: 2026-04-12T12:00:00+03:00
 project: The Reactive Planet
 project_key: NOKEY
 tracking_system: file-system
@@ -53,9 +53,9 @@ development_status:
   3-3-heavy-fragments-gold-debris: done
   3-4-intensity-stages-the-shatter-fsm: done
   epic-3-retrospective: done
-  epic-4: in-progress
+  epic-4: done
   4-1-results-overlay-one-more-try: done
   4-2-glados-rank-evaluation: done
   4-3-persistent-high-scores-localstorage: done
-  4-4-the-architects-funnel-technical-cta: ready-for-dev
-  epic-4-retrospective: optional
+  4-4-the-architects-funnel-technical-cta: done
+  epic-4-retrospective: done

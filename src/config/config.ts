@@ -3,6 +3,8 @@
  * Immutable constants for The Reactive Planet
  */
 
+import { readArchitectNotesUrlFromEnv } from "./architect-notes-url.js";
+
 /** Full-health planet cyan: heartbeat glow + atmospheric tint (Stories 2.1, 3.1). */
 const PLANET_HEALTHY_RGB = Object.freeze({ r: 0.35, g: 0.75, b: 1 });
 
@@ -295,5 +297,11 @@ export const CONFIG = Object.freeze({
   PERSISTENCE: Object.freeze({
     HIGH_SCORE_SCHEMA_VERSION: 1 as const,
     HIGH_SCORE_LOCAL_STORAGE_KEY: "trp_high_score_v1",
+  }),
+  /**
+   * Story 4.4: technical / portfolio deep-dive link (validated http(s), override via `TRP_ARCHITECT_NOTES_URL`).
+   */
+  RESULTS: Object.freeze({
+    ARCHITECT_NOTES_URL: readArchitectNotesUrlFromEnv(),
   }),
 });

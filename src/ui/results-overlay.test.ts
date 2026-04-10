@@ -33,7 +33,7 @@ describe("ResultsOverlayController", () => {
     host?.remove();
   });
 
-  it("subscribes to SESSION_ENDED and reveals outcome copy", () => {
+  it("subscribes to SESSION_ENDED and reveals outcome copy", async () => {
     host = document.createElement("div");
     document.body.appendChild(host);
     let replayCount = 0;
@@ -85,12 +85,67 @@ describe("ResultsOverlayController", () => {
       "Shattered",
     );
 
-    const btn = host.querySelector(
+    const replay = host.querySelector(
       ".rp-results-cta",
     ) as HTMLButtonElement | null;
-    expect(btn).toBeTruthy();
-    btn!.click();
+    expect(replay).toBeTruthy();
+
+    const architect = host.querySelector(
+      ".rp-results-cta-architect",
+    ) as HTMLButtonElement | null;
+    expect(architect).toBeTruthy();
+
+    const openSpy = vi
+      .spyOn(window, "open")
+      .mockImplementation(() => ({}) as Window);
+    architect!.click();
+    await vi.waitFor(() => {
+      expect(openSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/^https?:\/\//u),
+        "_blank",
+        "noopener,noreferrer",
+      );
+    });
+
+    replay!.click();
     expect(ctl.isVisibleForTesting).toBe(false);
     expect(replayCount).toBe(1);
+  });
+
+  it("shows architect hint when new tab is blocked (Story 4.4)", async () => {
+    host = document.createElement("div");
+    document.body.appendChild(host);
+    ctl = new ResultsOverlayController(host, () => {});
+
+    localStorage.removeItem(CONFIG.PERSISTENCE.HIGH_SCORE_LOCAL_STORAGE_KEY);
+    gameEvents.emit(EVENTS.SESSION_ENDED, {
+      outcome: "victory",
+      elapsedSessionSec: 30,
+      totalScore: 100,
+      maxComboMultiplier: 2,
+      finalAtmosphericHealth01: 0.5,
+    });
+
+    const hintEl = host.querySelector(
+      ".rp-results-architect-hint",
+    ) as HTMLParagraphElement | null;
+    expect(hintEl).toBeTruthy();
+    expect(hintEl!.hidden).toBe(true);
+
+    vi.spyOn(window, "open").mockReturnValue(null);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { clipboard: { writeText: writeText } });
+
+    const architect = host.querySelector(
+      ".rp-results-cta-architect",
+    ) as HTMLButtonElement | null;
+    expect(architect).toBeTruthy();
+    architect!.click();
+
+    await vi.waitFor(() => {
+      expect(hintEl!.hidden).toBe(false);
+    });
+    expect(hintEl!.textContent).toContain("blocked");
+    expect(writeText).toHaveBeenCalledWith(CONFIG.RESULTS.ARCHITECT_NOTES_URL);
   });
 });
