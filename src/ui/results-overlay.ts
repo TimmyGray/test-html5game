@@ -4,9 +4,11 @@ import {
   EVENTS,
   type SessionEndedPayload,
 } from "../core/events.js";
+import { readStoredHighScore } from "../core/high-score-storage.js";
 
 /**
- * Purpose: DOM results surface for Story 4.1 (glass panel + safe-area + replay CTA); Story 4.2 GLaDOS line.
+ * Purpose: DOM results surface for Story 4.1 (glass panel + safe-area + replay CTA); Story 4.2 GLaDOS line; Story 4.3 score + best.
+ * Run/Best numbers use `en-US` grouping to match `mountHighScoreLandingLabel` in `main.ts`.
  * Inputs: mount host (typically `#app`), replay callback; subscribes to `SESSION_ENDED` only.
  * Outputs: shows/hides overlay; outcome + stats come from payload — overlay does not recompute session state.
  * Side effects: mutates DOM; registers one event listener until `dispose`.
@@ -21,6 +23,7 @@ export class ResultsOverlayController {
   private readonly _backdrop: HTMLDivElement;
   private readonly _panel: HTMLDivElement;
   private readonly _title: HTMLHeadingElement;
+  private readonly _stats: HTMLParagraphElement;
   private readonly _body: HTMLParagraphElement;
   private readonly _glados: HTMLParagraphElement;
   private readonly _cta: HTMLButtonElement;
@@ -45,6 +48,9 @@ export class ResultsOverlayController {
     this._title = document.createElement("h2");
     this._title.className = "rp-results-title";
 
+    this._stats = document.createElement("p");
+    this._stats.className = "rp-results-stats";
+
     this._body = document.createElement("p");
     this._body.className = "rp-results-body";
 
@@ -61,6 +67,7 @@ export class ResultsOverlayController {
     });
 
     this._panel.appendChild(this._title);
+    this._panel.appendChild(this._stats);
     this._panel.appendChild(this._body);
     this._panel.appendChild(this._glados);
     this._panel.appendChild(this._cta);
@@ -86,6 +93,9 @@ export class ResultsOverlayController {
   }
 
   private show(payload: SessionEndedPayload): void {
+    const best = readStoredHighScore();
+    const fmt = (n: number): string => n.toLocaleString("en-US");
+    this._stats.textContent = `Run ${fmt(payload.totalScore)} · Best ${fmt(best)}`;
     const v = payload.outcome === "victory";
     this._title.textContent = v ? "Victory Pulse" : "Shattered";
     this._body.textContent = v

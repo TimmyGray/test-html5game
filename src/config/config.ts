@@ -289,4 +289,11 @@ export const CONFIG = Object.freeze({
     /** Victory only: if health ≤ this (0–1), prefer “barely survived” line variants. */
     LOW_HEALTH_VICTORY_THRESHOLD: 0.22,
   }),
+  /**
+   * Story 4.3: localStorage key + schema version for high score (single source of truth).
+   */
+  PERSISTENCE: Object.freeze({
+    HIGH_SCORE_SCHEMA_VERSION: 1 as const,
+    HIGH_SCORE_LOCAL_STORAGE_KEY: "trp_high_score_v1",
+  }),
 });

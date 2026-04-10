@@ -1,6 +1,6 @@
 # Story 4.3: Persistent High Scores (LocalStorage)
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -21,12 +21,12 @@ so that I have a personal goal to beat in future sessions.
 
 ## Tasks / Subtasks
 
-- [ ] Add/extend high-score storage utility with validation and safe parse defaults (AC: #1, #2, #4)
-- [ ] Integrate update call at session completion path (AC: #1, #2)
-- [ ] Wire displayed high score into landing/results UI components (AC: #3)
-- [ ] Keep key naming/versioning consistent and centralized in config/constants (AC: #4)
-- [ ] Add unit tests for first-run, overwrite, non-overwrite, and corrupt-data fallback (AC: #6)
-- [ ] Run regression tests and manual browser persistence smoke test (AC: #5, #6)
+- [x] Add/extend high-score storage utility with validation and safe parse defaults (AC: #1, #2, #4)
+- [x] Integrate update call at session completion path (AC: #1, #2)
+- [x] Wire displayed high score into landing/results UI components (AC: #3)
+- [x] Keep key naming/versioning consistent and centralized in config/constants (AC: #4)
+- [x] Add unit tests for first-run, overwrite, non-overwrite, and corrupt-data fallback (AC: #6)
+- [x] Run regression tests and manual browser persistence smoke test (AC: #5, #6)
 
 ## Dev Notes
 
@@ -70,12 +70,29 @@ Composer (Cursor agent)
 ### Completion Notes List
 
 - Story context prepared for implementation handoff.
+- Implemented `readStoredHighScore` / `updateHighScoreIfBeat` with JSON schema v1, corrupt/missing fallback, write-failure swallowing.
+- Session end path (`bootstrap-gameplay`) updates best before `SESSION_ENDED`; results overlay + landing chip read persisted value.
+- Full `vitest` + `eslint` + production webpack build passed; manual browser check: play once, confirm Best updates and survives reload.
+- Code review (CR): staged `high-score-storage` sources for git; aligned results `Run` / `Best` number formatting with landing (`en-US` locale).
 
 ### File List
 
+- `src/config/config.ts`
+- `src/core/high-score-storage.ts`
+- `src/core/high-score-storage.test.ts`
+- `src/bootstrap-gameplay.ts`
+- `src/ui/results-overlay.ts`
+- `src/ui/results-overlay.test.ts`
+- `src/main.ts`
+- `src/style.css`
 - `_bmad-output/implementation-artifacts/4-3-persistent-high-scores-localstorage.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
+### Change Log
+
+- 2026-04-11: Story 4.3 — localStorage high score persistence, landing + results UI, unit tests.
+- 2026-04-11: Code review follow-up — `git add` storage module; results overlay uses `toLocaleString("en-US")` for Run/Best.
+
 ---
 
-**Completion status:** ready-for-dev
+**Completion status:** done

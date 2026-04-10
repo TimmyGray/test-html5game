@@ -17,6 +17,7 @@ import {
   type AsteroidHitPayload,
   type SessionEndedPayload,
 } from "./core/events.js";
+import { updateHighScoreIfBeat } from "./core/high-score-storage.js";
 import { IntensityShatterFsm } from "./core/intensity-shatter-fsm.js";
 import { MicroSlowMo } from "./core/micro-slow-mo.js";
 import { QuantizedSfxPlayer } from "./core/quantized-sfx.js";
@@ -96,6 +97,7 @@ function isStormOutOfView(
 /**
  * Story 1.3: pooled storm debris + Story 1.2 flick / CCD pipeline.
  * Story 4.1: exposes `resetSession` for replay without tearing down Pixi; emits `SESSION_ENDED` on victory/shatter.
+ * Story 4.3: persists best session score to localStorage before `SESSION_ENDED`.
  *
  * Purpose: bootstrap all gameplay singletons for one mount lifetime.
  * Inputs: Pixi `Application`, optional `AudioContext` for quantized SFX.
@@ -339,6 +341,7 @@ export function initGameplay(
       });
     }
     if (intensitySync.enteredVictory) {
+      updateHighScoreIfBeat(sessionScore);
       const ah = CONFIG.ATMOSPHERIC_HEALTH;
       const endedVictory: SessionEndedPayload = {
         outcome: "victory",
@@ -351,6 +354,7 @@ export function initGameplay(
     }
     if (intensitySync.enteredShatter) {
       gameEvents.emit(EVENTS.PLANET_SHATTERED, { elapsedSessionSec });
+      updateHighScoreIfBeat(sessionScore);
       const endedShatter: SessionEndedPayload = {
         outcome: "shatter",
         elapsedSessionSec,

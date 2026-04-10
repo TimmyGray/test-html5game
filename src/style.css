@@ -27,6 +27,29 @@ body {
     height: 100vh;
 }
 
+/* Story 4.3: landing personal-best chip (above canvas, safe-area) */
+.rp-high-score-landing {
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    z-index: 30;
+    pointer-events: none;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-family:
+        "Segoe UI",
+        system-ui,
+        -apple-system,
+        sans-serif;
+    font-size: clamp(0.78rem, 2.6vw, 0.9rem);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: rgba(230, 245, 255, 0.92);
+    background: rgba(8, 14, 22, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+
 /* Story 4.1: glass results overlay — safe-area + backdrop (DOM above canvas) */
 /* Author `display: flex` must not override `[hidden]` on the same node, or the overlay
    stays painted after “One More Try” (hidden + flex = still visible). */
@@ -76,6 +99,21 @@ body {
         0 12px 40px rgba(0, 0, 0, 0.45),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
     text-align: center;
+}
+
+/* Story 4.3: session total + persisted best */
+.rp-results-stats {
+    margin: 0 0 0.55rem;
+    font-family:
+        "Segoe UI",
+        system-ui,
+        -apple-system,
+        sans-serif;
+    font-size: clamp(0.82rem, 2.8vw, 0.95rem);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: rgba(180, 230, 255, 0.95);
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
 }
 
 .rp-results-title {

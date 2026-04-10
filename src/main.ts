@@ -4,6 +4,7 @@ import { CONFIG } from "./config/config.js";
 import { MicroSlowMo } from "./core/micro-slow-mo.js";
 import { SyncClock } from "./core/sync-clock.js";
 import { gameEvents, EVENTS } from "./core/events.js";
+import { readStoredHighScore } from "./core/high-score-storage.js";
 import { initGameplay } from "./bootstrap-gameplay.js";
 import { ResultsOverlayController } from "./ui/results-overlay.js";
 
@@ -28,6 +29,29 @@ async function initPixiApp(): Promise<Application> {
     await app.init(makeInitOptions("webgl"));
     return app;
   }
+}
+
+/**
+ * Purpose: Fixed “landing” label for personal best (Story 4.3); refreshes after each session end.
+ * Inputs: DOM host (usually `#app`).
+ * Outputs: disposer to remove node + listener on teardown.
+ * Side effects: inserts a node; subscribes to `SESSION_ENDED`.
+ * Failure modes: none thrown.
+ */
+function mountHighScoreLandingLabel(host: HTMLElement): () => void {
+  const el = document.createElement("div");
+  el.className = "rp-high-score-landing";
+  el.setAttribute("aria-live", "polite");
+  const refresh = (): void => {
+    el.textContent = `Best ${readStoredHighScore().toLocaleString("en-US")}`;
+  };
+  refresh();
+  host.insertBefore(el, host.firstChild);
+  gameEvents.on(EVENTS.SESSION_ENDED, refresh);
+  return () => {
+    gameEvents.off(EVENTS.SESSION_ENDED, refresh);
+    el.remove();
+  };
 }
 
 function mountStartupError(error: unknown): void {
@@ -75,6 +99,7 @@ function mountStartupError(error: unknown): void {
     const gameplay = initGameplay(app, { audioContext: audioCtx });
 
     const appHost = document.getElementById("app") ?? document.body;
+    const disposeHighScoreLanding = mountHighScoreLandingLabel(appHost);
     const resultsOverlay = new ResultsOverlayController(appHost, () => {
       gameplay.resetSession();
     });
@@ -100,6 +125,7 @@ function mountStartupError(error: unknown): void {
       "beforeunload",
       () => {
         app.ticker.remove(onTick);
+        disposeHighScoreLanding();
         resultsOverlay.dispose();
         gameplay.destroy();
       },

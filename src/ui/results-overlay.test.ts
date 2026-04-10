@@ -1,15 +1,34 @@
 // @vitest-environment jsdom
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CONFIG } from "../config/config.js";
 import { buildGladosEvaluationLine } from "../core/glados-evaluation.js";
 import { gameEvents, EVENTS } from "../core/events.js";
+import { updateHighScoreIfBeat } from "../core/high-score-storage.js";
 import { ResultsOverlayController } from "./results-overlay.js";
 
 describe("ResultsOverlayController", () => {
   let host: HTMLDivElement;
   let ctl: ResultsOverlayController;
 
+  beforeEach(() => {
+    const mem = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => mem.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        mem.set(k, v);
+      },
+      removeItem: (k: string) => {
+        mem.delete(k);
+      },
+      clear: () => {
+        mem.clear();
+      },
+    } as Storage);
+  });
+
   afterEach(() => {
+    vi.unstubAllGlobals();
     ctl?.dispose();
     host?.remove();
   });
@@ -24,6 +43,8 @@ describe("ResultsOverlayController", () => {
 
     expect(ctl.isVisibleForTesting).toBe(false);
 
+    localStorage.removeItem(CONFIG.PERSISTENCE.HIGH_SCORE_LOCAL_STORAGE_KEY);
+    updateHighScoreIfBeat(1200);
     gameEvents.emit(EVENTS.SESSION_ENDED, {
       outcome: "victory",
       elapsedSessionSec: 30,
@@ -32,6 +53,9 @@ describe("ResultsOverlayController", () => {
       finalAtmosphericHealth01: 0.4,
     });
     expect(ctl.isVisibleForTesting).toBe(true);
+    expect(host.querySelector(".rp-results-stats")?.textContent).toBe(
+      "Run 1,200 · Best 1,200",
+    );
     expect(host.querySelector(".rp-results-title")?.textContent).toContain(
       "Victory",
     );
@@ -46,6 +70,7 @@ describe("ResultsOverlayController", () => {
       buildGladosEvaluationLine(vPayload),
     );
 
+    updateHighScoreIfBeat(0);
     gameEvents.emit(EVENTS.SESSION_ENDED, {
       outcome: "shatter",
       elapsedSessionSec: 12,
@@ -53,6 +78,9 @@ describe("ResultsOverlayController", () => {
       maxComboMultiplier: 1,
       finalAtmosphericHealth01: 0,
     });
+    expect(host.querySelector(".rp-results-stats")?.textContent).toBe(
+      "Run 0 · Best 1,200",
+    );
     expect(host.querySelector(".rp-results-title")?.textContent).toContain(
       "Shattered",
     );
