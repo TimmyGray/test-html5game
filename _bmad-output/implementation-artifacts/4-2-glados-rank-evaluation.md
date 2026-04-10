@@ -1,6 +1,6 @@
 # Story 4.2: GLaDOS Rank Evaluation
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -21,12 +21,12 @@ so that I feel motivated by personality-driven feedback.
 
 ## Tasks / Subtasks
 
-- [ ] Define performance tier thresholds and message catalog in centralized config/content structure (AC: #2, #3)
-- [ ] Implement evaluation module mapping session stats -> tier -> feedback line (AC: #1, #2, #3)
-- [ ] Wire module into results overlay pipeline (AC: #1, #4)
-- [ ] Ensure text rendering remains readable and responsive in overlay layout (AC: #4)
-- [ ] Add tests for tier boundary cases and deterministic message selection (AC: #6)
-- [ ] Run regression tests and manual visual checks (AC: #5, #6)
+- [x] Define performance tier thresholds and message catalog in centralized config/content structure (AC: #2, #3)
+- [x] Implement evaluation module mapping session stats -> tier -> feedback line (AC: #1, #2, #3)
+- [x] Wire module into results overlay pipeline (AC: #1, #4)
+- [x] Ensure text rendering remains readable and responsive in overlay layout (AC: #4)
+- [x] Add tests for tier boundary cases and deterministic message selection (AC: #6)
+- [x] Run regression tests and manual visual checks (AC: #5, #6)
 
 ## Dev Notes
 
@@ -67,15 +67,42 @@ so that I feel motivated by personality-driven feedback.
 
 Composer (Cursor agent)
 
+### Implementation Plan
+
+- Extended `SessionEndedPayload` with `totalScore`, `maxComboMultiplier`, `finalAtmosphericHealth01`; bootstrap accumulates score and peak combo per session.
+- `CONFIG.GLADOS_EVALUATION` holds composite tier boundaries, combo weight, and low-health victory threshold.
+- Pure `glados-evaluation.ts` maps composite → tier → deterministic catalog line; `glados-evaluation-catalog.ts` holds GLaDOS copy.
+- `ResultsOverlayController` adds `.rp-results-glados` fed by `buildGladosEvaluationLine` without owning gameplay state.
+
+### Debug Log
+
+- None.
+
 ### Completion Notes List
 
-- Story context prepared for implementation handoff.
+- All acceptance criteria addressed: deterministic tier mapping from configurable thresholds; victory/shatter + low-health victory variants; overlay integration only consumes `SESSION_ENDED` payload; 127 Vitest tests green; ESLint clean.
+- Manual: open a finished run — GLaDOS line appears between body copy and CTA with italic styling and clamped type scale.
+- Code review (2026-04-11): staged new evaluation sources for version control; added tier-2 band regression test; clarified `assignPerformanceTier` documentation.
 
 ### File List
 
-- `_bmad-output/implementation-artifacts/4-2-glados-rank-evaluation.md`
+- `src/config/config.ts`
+- `src/core/events.ts`
+- `src/core/glados-evaluation.ts`
+- `src/core/glados-evaluation.test.ts`
+- `src/content/glados-evaluation-catalog.ts`
+- `src/bootstrap-gameplay.ts`
+- `src/ui/results-overlay.ts`
+- `src/ui/results-overlay.test.ts`
+- `src/style.css`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/implementation-artifacts/4-2-glados-rank-evaluation.md`
+
+### Change Log
+
+- 2026-04-11: Story 4.2 — GLaDOS rank evaluation module, session stats on `SESSION_ENDED`, results overlay paragraph + tests.
+- 2026-04-11: Post-review — tier-2 boundary unit test, `assignPerformanceTier` doc clarification; story marked done.
 
 ---
 
-**Completion status:** ready-for-dev
+**Completion status:** done

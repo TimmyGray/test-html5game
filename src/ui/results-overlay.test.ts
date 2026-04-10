@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it } from "vitest";
+import { buildGladosEvaluationLine } from "../core/glados-evaluation.js";
 import { gameEvents, EVENTS } from "../core/events.js";
 import { ResultsOverlayController } from "./results-overlay.js";
 
@@ -26,15 +27,31 @@ describe("ResultsOverlayController", () => {
     gameEvents.emit(EVENTS.SESSION_ENDED, {
       outcome: "victory",
       elapsedSessionSec: 30,
+      totalScore: 1200,
+      maxComboMultiplier: 8,
+      finalAtmosphericHealth01: 0.4,
     });
     expect(ctl.isVisibleForTesting).toBe(true);
     expect(host.querySelector(".rp-results-title")?.textContent).toContain(
       "Victory",
     );
+    const vPayload = {
+      outcome: "victory" as const,
+      elapsedSessionSec: 30,
+      totalScore: 1200,
+      maxComboMultiplier: 8,
+      finalAtmosphericHealth01: 0.4,
+    };
+    expect(host.querySelector(".rp-results-glados")?.textContent).toBe(
+      buildGladosEvaluationLine(vPayload),
+    );
 
     gameEvents.emit(EVENTS.SESSION_ENDED, {
       outcome: "shatter",
       elapsedSessionSec: 12,
+      totalScore: 0,
+      maxComboMultiplier: 1,
+      finalAtmosphericHealth01: 0,
     });
     expect(host.querySelector(".rp-results-title")?.textContent).toContain(
       "Shattered",

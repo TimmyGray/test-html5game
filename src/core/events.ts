@@ -42,10 +42,19 @@ export type PlanetShatteredPayload = {
   elapsedSessionSec: number;
 };
 
-/** Story 4.1: single emission when the run resolves (victory or shatter). */
+/**
+ * Story 4.1: single emission when the run resolves (victory or shatter).
+ * Story 4.2: adds session stats for deterministic GLaDOS evaluation (no separate UI state).
+ */
 export type SessionEndedPayload = {
   outcome: "victory" | "shatter";
   elapsedSessionSec: number;
+  /** Cumulative deflection score this session (Story 4.2). */
+  totalScore: number;
+  /** Peak combo multiplier reached this session (Story 4.2). */
+  maxComboMultiplier: number;
+  /** Final atmosphere as fraction of max (0 at shatter, >0 on victory) (Story 4.2). */
+  finalAtmosphericHealth01: number;
 };
 
 export type { ComboChangedPayload };

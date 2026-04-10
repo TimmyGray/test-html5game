@@ -138,6 +138,8 @@ export function initGameplay(
   let atmosphericHp: number = CONFIG.ATMOSPHERIC_HEALTH.MAX;
   let atmosphericDisplay01 = 1;
   const comboTracker = new ComboTracker(CONFIG.COMBO.MULTIPLIER_STEPS);
+  let sessionScore = 0;
+  let maxComboMultiplierSession = 1;
 
   const impactParticles = new ImpactParticleBurst();
   impactParticles.mount(app.stage, 2);
@@ -337,9 +339,13 @@ export function initGameplay(
       });
     }
     if (intensitySync.enteredVictory) {
+      const ah = CONFIG.ATMOSPHERIC_HEALTH;
       const endedVictory: SessionEndedPayload = {
         outcome: "victory",
         elapsedSessionSec,
+        totalScore: sessionScore,
+        maxComboMultiplier: maxComboMultiplierSession,
+        finalAtmosphericHealth01: atmosphericHp / ah.MAX,
       };
       gameEvents.emit(EVENTS.SESSION_ENDED, endedVictory);
     }
@@ -348,6 +354,9 @@ export function initGameplay(
       const endedShatter: SessionEndedPayload = {
         outcome: "shatter",
         elapsedSessionSec,
+        totalScore: sessionScore,
+        maxComboMultiplier: maxComboMultiplierSession,
+        finalAtmosphericHealth01: 0,
       };
       gameEvents.emit(EVENTS.SESSION_ENDED, endedShatter);
     }
@@ -471,6 +480,11 @@ export function initGameplay(
           if (comboAfterHit !== null) {
             gameEvents.emit(EVENTS.COMBO_CHANGED, comboAfterHit);
           }
+          sessionScore += scoreAward;
+          maxComboMultiplierSession = Math.max(
+            maxComboMultiplierSession,
+            comboMult,
+          );
           gameEvents.emit(EVENTS.SCORE_AWARDED, {
             delta: scoreAward,
             fragmentKind,
@@ -593,6 +607,8 @@ export function initGameplay(
   const resetSession = (): void => {
     atmosphericHp = CONFIG.ATMOSPHERIC_HEALTH.MAX;
     atmosphericDisplay01 = 1;
+    sessionScore = 0;
+    maxComboMultiplierSession = 1;
     comboTracker.resetSession();
     comboFireworks.resetSession();
     intensityFsm.reset();

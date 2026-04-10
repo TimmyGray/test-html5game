@@ -1,3 +1,4 @@
+import { buildGladosEvaluationLine } from "../core/glados-evaluation.js";
 import {
   gameEvents,
   EVENTS,
@@ -5,9 +6,9 @@ import {
 } from "../core/events.js";
 
 /**
- * Purpose: DOM results surface for Story 4.1 (glass panel + safe-area + replay CTA).
+ * Purpose: DOM results surface for Story 4.1 (glass panel + safe-area + replay CTA); Story 4.2 GLaDOS line.
  * Inputs: mount host (typically `#app`), replay callback; subscribes to `SESSION_ENDED` only.
- * Outputs: shows/hides overlay; does not infer outcome — payload is authoritative.
+ * Outputs: shows/hides overlay; outcome + stats come from payload — overlay does not recompute session state.
  * Side effects: mutates DOM; registers one event listener until `dispose`.
  * Failure modes: missing host throws; replay throws propagate to caller.
  * CSS: `.rp-results-root` uses `display:flex`; pair with `.rp-results-root[hidden]{display:none !important}`
@@ -21,6 +22,7 @@ export class ResultsOverlayController {
   private readonly _panel: HTMLDivElement;
   private readonly _title: HTMLHeadingElement;
   private readonly _body: HTMLParagraphElement;
+  private readonly _glados: HTMLParagraphElement;
   private readonly _cta: HTMLButtonElement;
   private readonly _onSessionEnded = (p: SessionEndedPayload): void => {
     this.show(p);
@@ -46,6 +48,9 @@ export class ResultsOverlayController {
     this._body = document.createElement("p");
     this._body.className = "rp-results-body";
 
+    this._glados = document.createElement("p");
+    this._glados.className = "rp-results-glados";
+
     this._cta = document.createElement("button");
     this._cta.type = "button";
     this._cta.className = "rp-results-cta";
@@ -57,6 +62,7 @@ export class ResultsOverlayController {
 
     this._panel.appendChild(this._title);
     this._panel.appendChild(this._body);
+    this._panel.appendChild(this._glados);
     this._panel.appendChild(this._cta);
 
     this._root = document.createElement("div");
@@ -85,6 +91,7 @@ export class ResultsOverlayController {
     this._body.textContent = v
       ? "You held the line through the full pressure cycle. The planet still beats."
       : "The atmosphere broke. Regroup and deflect with the rhythm.";
+    this._glados.textContent = buildGladosEvaluationLine(payload);
     this._root.hidden = false;
     this._backdrop.hidden = false;
   }

@@ -93,7 +93,7 @@ body {
 }
 
 .rp-results-body {
-    margin: 0 0 1.25rem;
+    margin: 0 0 0.75rem;
     font-family:
         "Segoe UI",
         system-ui,
@@ -101,6 +101,22 @@ body {
     font-size: clamp(0.95rem, 3.2vw, 1.05rem);
     line-height: 1.45;
     color: rgba(230, 240, 255, 0.88);
+}
+
+/* Story 4.2: GLaDOS evaluation — distinct voice, readable on small viewports */
+.rp-results-glados {
+    margin: 0 0 1.15rem;
+    font-family:
+        "Segoe UI",
+        system-ui,
+        -apple-system,
+        sans-serif;
+    font-size: clamp(0.88rem, 3vw, 1rem);
+    line-height: 1.5;
+    font-style: italic;
+    font-weight: 600;
+    color: rgba(200, 230, 255, 0.92);
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
 }
 
 .rp-results-cta {

@@ -278,4 +278,15 @@ export const CONFIG = Object.freeze({
     FIRST_WAVE_JITTER: 0,
     PLANET_HIT_ENABLED: true,
   }),
+  /**
+   * Story 4.2: GLaDOS-style results copy — composite = totalScore + maxComboMult * COMBO_WEIGHT.
+   * Tiers: score < BOUNDS[0] → 0, else < BOUNDS[1] → 1, else < BOUNDS[2] → 2, else → 3.
+   */
+  GLADOS_EVALUATION: Object.freeze({
+    COMBO_WEIGHT: 40,
+    /** Composite score lower bounds for tiers 1–3 (tier 0 is below TIER_BOUNDARIES[0]). */
+    TIER_BOUNDARIES: Object.freeze([350, 900, 1800]) as readonly number[],
+    /** Victory only: if health ≤ this (0–1), prefer “barely survived” line variants. */
+    LOW_HEALTH_VICTORY_THRESHOLD: 0.22,
+  }),
 });
