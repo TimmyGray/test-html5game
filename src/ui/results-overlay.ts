@@ -10,6 +10,8 @@ import {
  * Outputs: shows/hides overlay; does not infer outcome — payload is authoritative.
  * Side effects: mutates DOM; registers one event listener until `dispose`.
  * Failure modes: missing host throws; replay throws propagate to caller.
+ * CSS: `.rp-results-root` uses `display:flex`; pair with `.rp-results-root[hidden]{display:none !important}`
+ * or `[hidden]` will not visually hide (author `display` wins over the attribute alone).
  */
 export class ResultsOverlayController {
   private readonly _host: HTMLElement;

@@ -28,6 +28,12 @@ body {
 }
 
 /* Story 4.1: glass results overlay — safe-area + backdrop (DOM above canvas) */
+/* Author `display: flex` must not override `[hidden]` on the same node, or the overlay
+   stays painted after “One More Try” (hidden + flex = still visible). */
+.rp-results-root[hidden] {
+    display: none !important;
+}
+
 .rp-results-root {
     position: fixed;
     inset: 0;
