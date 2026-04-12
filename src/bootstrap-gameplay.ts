@@ -15,11 +15,13 @@ import {
   gameEvents,
   EVENTS,
   type AsteroidHitPayload,
+  type PlanetImpactPayload,
   type SessionEndedPayload,
 } from "./core/events.js";
 import { updateHighScoreIfBeat } from "./core/high-score-storage.js";
 import { IntensityShatterFsm } from "./core/intensity-shatter-fsm.js";
 import { MicroSlowMo } from "./core/micro-slow-mo.js";
+import { AudioDirector } from "./core/audio-director.js";
 import { QuantizedSfxPlayer } from "./core/quantized-sfx.js";
 import { SyncClock } from "./core/sync-clock.js";
 import { FlickInputManager } from "./systems/input/flick-input-manager.js";
@@ -101,17 +103,27 @@ function isStormOutOfView(
  *
  * Purpose: bootstrap all gameplay singletons for one mount lifetime.
  * Inputs: Pixi `Application`, optional `AudioContext` for quantized SFX.
- * Outputs: `{ update, destroy, resetSession }` — call `update` from ticker; `resetSession` for “One More Try”.
+ * Outputs: gameplay loop controls plus audio APIs (`setAudioMuted` / `setMasterVolume` emit bus events).
  * Side effects: registers stage listeners and event-bus handlers until `destroy`.
  * Failure modes: none thrown during init; pool/spawner assume valid renderer dimensions on first tick.
  */
 export function initGameplay(
   app: Application,
-  opts?: { audioContext?: AudioContext },
+  opts?: {
+    audioContext?: AudioContext;
+    getRhythmBpm?: () => number;
+    getKickPulseBoost?: () => number;
+  },
 ): {
   update: () => void;
   destroy: () => void;
   resetSession: () => void;
+  setAudioMuted: (muted: boolean) => void;
+  setMasterVolume: (volume: number) => void;
+  getAudioState: () => { muted: boolean; masterVolume: number };
+  getAudioOutputNode: () => AudioNode | null;
+  /** BGM / bed: skips SFX headroom bus; still uses shared mute + master gain. */
+  getMasterInputNode: () => AudioNode | null;
 } {
   const heartbeatDebug = isHeartbeatDebug();
 
@@ -152,18 +164,40 @@ export function initGameplay(
   comboFireworks.mount(app.stage, 3);
   const burstRng = createSeededRng(CONFIG.PARTICLE_EJECTION.RNG_SEED);
 
+  const audioDirector =
+    opts?.audioContext !== undefined
+      ? new AudioDirector(opts.audioContext)
+      : null;
   const quantizedSfx =
     opts?.audioContext !== undefined
-      ? new QuantizedSfxPlayer(opts.audioContext)
+      ? new QuantizedSfxPlayer(opts.audioContext, audioDirector?.outputNode)
       : null;
 
   const onAsteroidHit = (payload: AsteroidHitPayload): void => {
-    quantizedSfx?.trySchedulePerfectSmash(
-      payload.flickIntent,
+    const audioNow = SyncClock.instance.getAbsoluteTime();
+    audioDirector?.tryScheduleDeflectionCue(audioNow);
+    quantizedSfx?.trySchedulePerfectSmash(payload.flickIntent, audioNow);
+  };
+  gameEvents.on(EVENTS.ASTEROID_HIT, onAsteroidHit);
+
+  const onPlanetImpact = (): void => {
+    audioDirector?.trySchedulePlanetImpactCue(
       SyncClock.instance.getAbsoluteTime(),
     );
   };
-  gameEvents.on(EVENTS.ASTEROID_HIT, onAsteroidHit);
+  gameEvents.on(EVENTS.PLANET_IMPACT, onPlanetImpact);
+
+  const onPlanetShattered = (): void => {
+    audioDirector?.tryScheduleShatterCue(SyncClock.instance.getAbsoluteTime());
+  };
+  gameEvents.on(EVENTS.PLANET_SHATTERED, onPlanetShattered);
+
+  const onBeat = (): void => {
+    audioDirector?.tryScheduleHeartbeatCue(
+      SyncClock.instance.getAbsoluteTime(),
+    );
+  };
+  gameEvents.on(EVENTS.BEAT, onBeat);
 
   const beatTickTracker = new BeatTickTracker();
   const planetHeartbeatSample = { phase: 0, envelope: 0 };
@@ -258,6 +292,7 @@ export function initGameplay(
     const h = app.renderer.height;
     starfield.syncSize(w, h);
     const audioTime = SyncClock.instance.getAbsoluteTime();
+    const runtimeBpm = opts?.getRhythmBpm?.() ?? CONFIG.RHYTHM.BPM;
     if (sessionAudioStart < 0) {
       sessionAudioStart = audioTime;
     }
@@ -300,6 +335,11 @@ export function initGameplay(
           0,
           atmosphericHp - CONFIG.ATMOSPHERIC_HEALTH.DAMAGE_PER_PLANET_IMPACT,
         );
+        const impactPayload: PlanetImpactPayload = {
+          damageApplied: CONFIG.ATMOSPHERIC_HEALTH.DAMAGE_PER_PLANET_IMPACT,
+          atmosphericHealthAfter: atmosphericHp,
+        };
+        gameEvents.emit(EVENTS.PLANET_IMPACT, impactPayload);
         const comboReset = comboTracker.notifyReset();
         if (comboReset !== null) {
           gameEvents.emit(EVENTS.COMBO_CHANGED, comboReset);
@@ -544,13 +584,10 @@ export function initGameplay(
     }
 
     const hb = CONFIG.PLANET_HEARTBEAT;
-    samplePlanetHeartbeatInto(
-      audioTime,
-      CONFIG.RHYTHM.BPM,
-      hb,
-      planetHeartbeatSample,
-    );
+    samplePlanetHeartbeatInto(audioTime, runtimeBpm, hb, planetHeartbeatSample);
     const env = planetHeartbeatSample.envelope;
+    const kickPulseBoost = opts?.getKickPulseBoost?.() ?? 0;
+    const pulseEnvelope = Math.min(1.5, env + kickPulseBoost);
 
     const ah = CONFIG.ATMOSPHERIC_HEALTH;
     atmosphericDisplay01 = smoothAtmosphericDisplay01(
@@ -566,17 +603,17 @@ export function initGameplay(
       atmosphereTintScratch,
     );
     planetHeartbeatFilter.setOscillationIntensity(intensityOscillationMul);
-    planetHeartbeatFilter.setPulse(env);
+    planetHeartbeatFilter.setPulse(pulseEnvelope);
     planetHeartbeatFilter.setGlowTintRgb(
       atmosphereTintScratch.r,
       atmosphereTintScratch.g,
       atmosphereTintScratch.b,
     );
 
-    const scale = 1 + env * hb.SCALE_GAIN;
+    const scale = 1 + pulseEnvelope * hb.SCALE_GAIN;
     planetRoot.scale.set(scale);
     planetRim.clear();
-    if (env > 0.004) {
+    if (pulseEnvelope > 0.004) {
       const tr = atmosphereTintScratch.r;
       const tg = atmosphereTintScratch.g;
       const tb = atmosphereTintScratch.b;
@@ -584,17 +621,18 @@ export function initGameplay(
         (Math.round(tr * 255) << 16) |
         (Math.round(tg * 255) << 8) |
         Math.round(tb * 255);
-      planetRim.circle(0, 0, CONFIG.PLANET.RADIUS + 4 + env * 8).stroke({
-        width: 2 + env * 5,
-        color: tintHex,
-        alpha: Math.min(1, env * hb.GLOW_GAIN * 1.1),
-      });
+      planetRim
+        .circle(0, 0, CONFIG.PLANET.RADIUS + 4 + pulseEnvelope * 8)
+        .stroke({
+          width: 2 + pulseEnvelope * 5,
+          color: tintHex,
+          alpha: Math.min(1, pulseEnvelope * hb.GLOW_GAIN * 1.1),
+        });
     }
     planetRoot.position.set(w * 0.5, h * 0.5);
 
-    if (beatTickTracker.consumeBeatTick(audioTime, CONFIG.RHYTHM.BPM)) {
-      const bpm = CONFIG.RHYTHM.BPM;
-      const beatIndex = Math.floor(audioTime * (bpm / 60));
+    if (beatTickTracker.consumeBeatTick(audioTime, runtimeBpm)) {
+      const beatIndex = Math.floor(audioTime * (runtimeBpm / 60));
       gameEvents.emit(EVENTS.BEAT, { beatIndex, audioTime });
       if (heartbeatDebug) {
         console.debug(
@@ -642,6 +680,9 @@ export function initGameplay(
   const destroy = (): void => {
     gameEvents.off(EVENTS.FLICK_COMMIT, onCommit);
     gameEvents.off(EVENTS.ASTEROID_HIT, onAsteroidHit);
+    gameEvents.off(EVENTS.PLANET_IMPACT, onPlanetImpact);
+    gameEvents.off(EVENTS.PLANET_SHATTERED, onPlanetShattered);
+    gameEvents.off(EVENTS.BEAT, onBeat);
     input.detach();
     intensityFsm.reset();
     sessionAudioStart = -1;
@@ -654,6 +695,7 @@ export function initGameplay(
     pool.dispose();
     collisionSpectacle.dispose();
     quantizedSfx?.dispose();
+    audioDirector?.dispose();
     impactParticles.dispose();
     comboFireworks.dispose();
     starfield.destroy({ children: true });
@@ -661,5 +703,42 @@ export function initGameplay(
     debugRay.destroy();
   };
 
-  return { update, destroy, resetSession };
+  const setAudioMuted = (muted: boolean): void => {
+    audioDirector?.setMuted(muted);
+    gameEvents.emit(EVENTS.AUDIO_MUTE_CHANGED, { muted });
+  };
+
+  const setMasterVolume = (volume: number): void => {
+    audioDirector?.setMasterVolume(volume);
+    const v =
+      audioDirector?.state.masterVolume ?? CONFIG.AUDIO.DEFAULT_MASTER_VOLUME;
+    gameEvents.emit(EVENTS.AUDIO_VOLUME_CHANGED, { volume: v });
+  };
+
+  const getAudioState = (): { muted: boolean; masterVolume: number } => {
+    if (audioDirector === null) {
+      return { muted: false, masterVolume: CONFIG.AUDIO.DEFAULT_MASTER_VOLUME };
+    }
+    const state = audioDirector.state;
+    return { muted: state.muted, masterVolume: state.masterVolume };
+  };
+
+  const getAudioOutputNode = (): AudioNode | null => {
+    return audioDirector?.outputNode ?? null;
+  };
+
+  const getMasterInputNode = (): AudioNode | null => {
+    return audioDirector?.masterInputNode ?? null;
+  };
+
+  return {
+    update,
+    destroy,
+    resetSession,
+    setAudioMuted,
+    setMasterVolume,
+    getAudioState,
+    getAudioOutputNode,
+    getMasterInputNode,
+  };
 }

@@ -1,5 +1,5 @@
 # generated: 2026-04-08T03:52:50+03:00
-# last_updated: 2026-04-12T12:00:00+03:00
+# last_updated: 2026-04-12T04:15:00+03:00
 # project: The Reactive Planet
 # project_key: NOKEY
 # tracking_system: file-system
@@ -28,7 +28,7 @@
 #   - done: Retrospective has been completed
 
 generated: 2026-04-08T03:52:50+03:00
-last_updated: 2026-04-12T12:00:00+03:00
+last_updated: 2026-04-12T04:15:00+03:00
 project: The Reactive Planet
 project_key: NOKEY
 tracking_system: file-system
@@ -59,3 +59,7 @@ development_status:
   4-3-persistent-high-scores-localstorage: done
   4-4-the-architects-funnel-technical-cta: done
   epic-4-retrospective: done
+  epic-5: in-progress
+  5-1-live-session-hud-score-combo: done
+  5-2-audio-director-player-audio-controls: done
+  5-3-debris-motion-trails-procedural: backlog

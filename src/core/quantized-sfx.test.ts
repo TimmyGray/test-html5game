@@ -108,9 +108,51 @@ describe("QuantizedSfxPlayer", () => {
     );
   }
 
-  it("does not schedule when context is not running", () => {
+  it("schedules when context is suspended so audio plays after resume", () => {
+    const gainConnect = vi.fn();
+    const createBufferSource = vi.fn(
+      () =>
+        ({
+          buffer: null as AudioBuffer | null,
+          playbackRate: { value: 1 },
+          connect: vi.fn(),
+          disconnect: vi.fn(),
+          start: vi.fn(),
+          onended: null as (() => void) | null,
+        }) as unknown as AudioBufferSourceNode,
+    );
     const ctx = {
       state: "suspended",
+      sampleRate: 48000,
+      currentTime: 10,
+      createBuffer: (channels: number, length: number, sampleRate: number) => {
+        void channels;
+        void sampleRate;
+        return {
+          getChannelData: () => new Float32Array(length),
+        } as unknown as AudioBuffer;
+      },
+      createBufferSource,
+      createGain: () =>
+        ({
+          gain: { value: 1 },
+          connect: gainConnect,
+          disconnect: vi.fn(),
+        }) as unknown as GainNode,
+      destination: {} as AudioDestinationNode,
+    } as unknown as AudioContext;
+
+    const p = new QuantizedSfxPlayer(ctx);
+    p.trySchedulePerfectSmash(perfectFlick(), 1);
+    expect(createBufferSource).toHaveBeenCalledOnce();
+    p.dispose();
+  });
+
+  it("routes effect gain into provided output node", () => {
+    const gainConnect = vi.fn();
+    const outputNode = { connect: vi.fn() } as unknown as AudioNode;
+    const ctx = {
+      state: "running",
       sampleRate: 48000,
       currentTime: 10,
       createBuffer: (channels: number, length: number, sampleRate: number) => {
@@ -124,15 +166,14 @@ describe("QuantizedSfxPlayer", () => {
       createGain: () =>
         ({
           gain: { value: 1 },
-          connect: vi.fn(),
+          connect: gainConnect,
           disconnect: vi.fn(),
         }) as unknown as GainNode,
       destination: {} as AudioDestinationNode,
     } as unknown as AudioContext;
 
-    const p = new QuantizedSfxPlayer(ctx);
-    p.trySchedulePerfectSmash(perfectFlick(), 1);
-    expect(ctx.createBufferSource).not.toHaveBeenCalled();
+    const p = new QuantizedSfxPlayer(ctx, outputNode);
+    expect(gainConnect).toHaveBeenCalledWith(outputNode);
     p.dispose();
   });
 

@@ -191,6 +191,43 @@ export const CONFIG = Object.freeze({
      */
     MASTER_GAIN: 0.35,
   }),
+  /** Story 5.2: global audio director defaults and lightweight procedural cues. */
+  AUDIO: Object.freeze({
+    /** Master bus default volume (linear 0..1). */
+    DEFAULT_MASTER_VOLUME: 0.78,
+    /** Player volume slider min/max for normalized gain. */
+    MASTER_VOLUME_MIN: 0,
+    MASTER_VOLUME_MAX: 1,
+    /**
+     * Extra linear gain on the SFX sub-bus only (`AudioDirector.outputNode`). Route BGM via
+     * `AudioDirector.masterInputNode` so bed level is not multiplied by this headroom.
+     */
+    SFX_BUS_HEADROOM: 1.85,
+    /** Deflection / “explosion” tone + noise layer (linear, pre–SFX-bus). */
+    DEFLECTION_GAIN: 0.42,
+    /** Deflection cue length in seconds (tone + noise burst). */
+    DEFLECTION_DURATION_SEC: 0.09,
+    /** Short noise burst gain for deflection impact feel. */
+    DEFLECTION_NOISE_GAIN: 0.35,
+    /** Planet impact thump (linear, pre–SFX-bus). */
+    IMPACT_GAIN: 0.55,
+    /** Planet impact cue length in seconds. */
+    IMPACT_DURATION_SEC: 0.12,
+    /** Planet shatter cue gain before master bus. */
+    SHATTER_GAIN: 0.72,
+    /** Planet shatter cue oscillator length in seconds. */
+    SHATTER_DURATION_SEC: 0.28,
+    /** Heartbeat pulse cue gain before master bus. */
+    HEARTBEAT_GAIN: 0.05,
+    /** Heartbeat pulse cue oscillator length in seconds. */
+    HEARTBEAT_DURATION_SEC: 0.08,
+    /** Heartbeat cue frequency in Hz (low-end pulse bed). */
+    HEARTBEAT_FREQUENCY_HZ: 84,
+    /** localStorage key for player audio controls persistence. */
+    PLAYER_PREFS_KEY: "trp_audio_prefs_v1",
+    /** Background music linear gain into master (keep below SFX-perceived loudness). */
+    BGM_GAIN: 0.34,
+  }),
   EVENTS: {
     GAME_START: "game_start",
     GAME_OVER: "game_over",
@@ -203,8 +240,14 @@ export const CONFIG = Object.freeze({
     SCORE_AWARDED: "score_awarded",
     /** Story 3.4: arrival → flow → climax (session time thresholds) */
     INTENSITY_STAGE_CHANGED: "intensity_stage_changed",
+    /** Story 5.2: emitted when debris reaches planet body and applies damage. */
+    PLANET_IMPACT: "planet_impact",
     /** Story 3.4: one-shot when atmosphere hits zero (Epic 4 overlays) */
     PLANET_SHATTERED: "planet_shattered",
+    /** Story 5.2: player toggled global mute from HUD control. */
+    AUDIO_MUTE_CHANGED: "audio_mute_changed",
+    /** Story 5.2: player changed global master volume from HUD control. */
+    AUDIO_VOLUME_CHANGED: "audio_volume_changed",
     /** Story 4.1: session ended (victory or shatter) — authoritative outcome for results UI */
     SESSION_ENDED: "session_ended",
   },

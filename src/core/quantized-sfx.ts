@@ -102,7 +102,14 @@ export class QuantizedSfxPlayer {
   private readonly _buffer: AudioBuffer;
   private readonly _gain: GainNode;
 
-  public constructor(audioContext: AudioContext) {
+  /**
+   * Purpose: create quantized hit SFX player routed through caller-provided output bus.
+   * Inputs assumptions: valid AudioContext and an output node connected to destination path.
+   * Outputs contract: internal gain set to effect-level master and connected to output node.
+   * Side effects: allocates one reusable one-shot buffer and one GainNode.
+   * Failure modes: if output node is disconnected externally, scheduling is silent but safe.
+   */
+  public constructor(audioContext: AudioContext, outputNode?: AudioNode) {
     this._ctx = audioContext;
     const q = CONFIG.QUANTIZED_SFX;
     this._buffer = buildOneShotBuffer(
@@ -113,11 +120,12 @@ export class QuantizedSfxPlayer {
     );
     this._gain = audioContext.createGain();
     this._gain.gain.value = q.MASTER_GAIN;
-    this._gain.connect(audioContext.destination);
+    this._gain.connect(outputNode ?? audioContext.destination);
   }
 
   /**
-   * Perfect-smash-only: safe no-op when gated out, context suspended, or non-running.
+   * Perfect-smash-only: safe no-op when gated out or timeline invalid; may schedule while
+   * context is suspended so playback begins after resume.
    */
   public trySchedulePerfectSmash(
     flick: FlickIntent,
@@ -125,9 +133,6 @@ export class QuantizedSfxPlayer {
   ): void {
     const q = CONFIG.QUANTIZED_SFX;
     if (!isPerfectSmashFlick(flick, q.PERFECT_SMASH_MIN_WEIGHTED_SPEED_PX)) {
-      return;
-    }
-    if (this._ctx.state !== "running") {
       return;
     }
     if (!Number.isFinite(audioRelNow) || audioRelNow < 0) {

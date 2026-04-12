@@ -30,7 +30,10 @@ body {
 /* Story 4.3: landing personal-best chip (above canvas, safe-area) */
 .rp-high-score-landing {
     position: fixed;
-    top: max(10px, env(safe-area-inset-top, 0px));
+    /* Keep clear of Story 5.1 combo HUD in the top-right corner. */
+    top: calc(
+        max(10px, env(safe-area-inset-top, 0px)) + clamp(3.2rem, 9vw, 4rem)
+    );
     right: max(12px, env(safe-area-inset-right, 0px));
     z-index: 30;
     pointer-events: none;
@@ -48,6 +51,132 @@ body {
     background: rgba(8, 14, 22, 0.55);
     border: 1px solid rgba(255, 255, 255, 0.14);
     box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+
+/* Story 5.1: in-session HUD (score top-left, combo top-right, safe-area aware). */
+.rp-session-hud-root[hidden] {
+    display: none !important;
+}
+
+.rp-session-hud-root {
+    position: fixed;
+    inset: 0;
+    z-index: 28;
+    pointer-events: none;
+    font-family:
+        "Segoe UI",
+        system-ui,
+        -apple-system,
+        sans-serif;
+}
+
+.rp-session-hud-score,
+.rp-session-hud-combo {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+    padding: 0.4rem 0.65rem;
+    border-radius: 0.7rem;
+    background: rgba(6, 12, 20, 0.35);
+    border: 1px solid rgba(185, 225, 255, 0.18);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+    text-shadow:
+        0 0 8px rgba(24, 170, 255, 0.2),
+        0 1px 10px rgba(0, 0, 0, 0.7);
+}
+
+.rp-session-hud-score {
+    top: max(10px, env(safe-area-inset-top, 0px));
+    left: max(12px, env(safe-area-inset-left, 0px));
+    text-align: left;
+}
+
+.rp-session-hud-combo {
+    top: max(10px, env(safe-area-inset-top, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    text-align: right;
+}
+
+.rp-session-hud-title {
+    font-size: clamp(0.65rem, 2.2vw, 0.76rem);
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    color: rgba(200, 230, 250, 0.82);
+    text-transform: uppercase;
+}
+
+.rp-session-hud-value {
+    font-size: clamp(1.02rem, 3.8vw, 1.35rem);
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: rgba(236, 248, 255, 0.97);
+}
+
+/* Story 5.2: player audio controls (mute + master volume) near lower safe-area. */
+.rp-session-hud-audio[hidden] {
+    display: none !important;
+}
+
+.rp-session-hud-audio {
+    position: absolute;
+    left: max(12px, env(safe-area-inset-left, 0px));
+    bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.75rem;
+    background: rgba(6, 12, 20, 0.42);
+    border: 1px solid rgba(185, 225, 255, 0.18);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+    pointer-events: auto;
+}
+
+.rp-session-hud-audio-mute {
+    border: 1px solid rgba(180, 220, 255, 0.4);
+    border-radius: 999px;
+    background: rgba(26, 42, 62, 0.75);
+    color: rgba(236, 248, 255, 0.95);
+    padding: 0.35rem 0.72rem;
+    font-family:
+        "Segoe UI",
+        system-ui,
+        sans-serif;
+    font-size: clamp(0.72rem, 2.5vw, 0.82rem);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+}
+
+.rp-session-hud-audio-mute:hover {
+    background: rgba(46, 66, 92, 0.82);
+}
+
+.rp-session-hud-audio-volume {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family:
+        "Segoe UI",
+        system-ui,
+        sans-serif;
+    font-size: clamp(0.68rem, 2.4vw, 0.78rem);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: rgba(200, 230, 250, 0.88);
+    text-transform: uppercase;
+}
+
+.rp-session-hud-audio-volume input[type="range"] {
+    width: clamp(92px, 26vw, 132px);
+    accent-color: #88d9ff;
+}
+
+.rp-session-hud-audio-value {
+    min-width: 2.6rem;
+    text-align: right;
+    color: rgba(236, 248, 255, 0.95);
 }
 
 /* Story 4.1: glass results overlay — safe-area + backdrop (DOM above canvas) */

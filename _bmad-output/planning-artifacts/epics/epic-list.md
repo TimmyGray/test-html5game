@@ -235,3 +235,46 @@ So that I can evaluate the developer's engineering depth.
 **Given** the results overlay is active
 **When** I click the "Architect's Notes" button
 **Then** the application navigates to the detailed technical documentation or portfolio backend in a new tab.
+
+## Epic 5: Session Feedback & Audio Fidelity
+
+Goal: Close the gap between UX/GDD promise and live gameplay by delivering continuous in-session feedback (audio + HUD) and stronger debris readability.
+
+## Story 5.1: Live Session HUD (Score + Combo)
+
+As a Player,
+I want to see score and combo while I am playing,
+So that I can react to performance in real time instead of waiting for results.
+
+**Acceptance Criteria:**
+
+**Given** a session is in `PLAYING` state
+**When** I successfully deflect debris
+**Then** score updates immediately in a visible in-session HUD
+**And** combo multiplier visibility matches active streak changes in real time.
+
+## Story 5.2: Audio Director + Player Audio Controls
+
+As a Player,
+I want complete gameplay audio feedback with mute and volume controls,
+So that I can hear rhythmic responses and control loudness per my environment.
+
+**Acceptance Criteria:**
+
+**Given** gameplay interactions occur
+**When** deflections, planet impacts, and heartbeat moments happen
+**Then** distinct routed SFX/audio cues are audible through a master audio bus
+**And** mute/volume controls affect all game audio consistently.
+
+## Story 5.3: Debris Motion Trails (Procedural)
+
+As a Player,
+I want debris to show motion trails,
+So that incoming threats are easier to read at high speed and the game feels more premium.
+
+**Acceptance Criteria:**
+
+**Given** debris is moving on screen
+**When** velocity is above trail threshold
+**Then** a velocity-aligned procedural trail is rendered with fade
+**And** the effect runs within the 60fps performance budget on supported targets.

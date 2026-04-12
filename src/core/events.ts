@@ -37,9 +37,25 @@ export type IntensityStageChangedPayload = {
   elapsedSessionSec: number;
 };
 
+/** Story 5.2: emitted when a debris impact damages the planet atmosphere. */
+export type PlanetImpactPayload = {
+  damageApplied: number;
+  atmosphericHealthAfter: number;
+};
+
 /** Story 3.4: atmosphere depleted — bridge to Epic 4 results / shatter VFX. */
 export type PlanetShatteredPayload = {
   elapsedSessionSec: number;
+};
+
+/** Story 5.2: payload for player mute toggle from HUD controls. */
+export type AudioMuteChangedPayload = {
+  muted: boolean;
+};
+
+/** Story 5.2: payload for player master volume control from HUD controls. */
+export type AudioVolumeChangedPayload = {
+  volume: number;
 };
 
 /**
