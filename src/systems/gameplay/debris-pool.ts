@@ -94,6 +94,7 @@ export class DebrisPool {
 
     debris.tutorialFirstWaveActive = false;
     debris.goldFragment = false;
+    debris.resetVisualState();
     debris.graphics.visible = false;
     this._free.push(debris.poolSlotIndex);
   }
@@ -105,6 +106,7 @@ export class DebrisPool {
     const n = this._slots.length;
     for (let i = 0; i < n; i++) {
       this._slots[i]!.poolActiveIndex = -1;
+      this._slots[i]!.resetVisualState();
       this._free.push(i);
       const g = this._slots[i]!.graphics;
       g.parent?.removeChild(g);

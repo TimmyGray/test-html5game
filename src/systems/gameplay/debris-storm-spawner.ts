@@ -49,6 +49,39 @@ export class DebrisStormSpawner {
   }
 
   /**
+   * Purpose: map RNG draw to one of four asteroid visual variants deterministically.
+   * Inputs assumptions: rng returns [0, 1); caller supplies configured variant count.
+   * Outputs contract: integer index in `[0, variantCount - 1]`.
+   * Side effects: consumes one RNG draw through injected storm rng.
+   * Failure modes: returns 0 when variantCount is invalid.
+   */
+  private _pickVariantIndex(variantCount: number): number {
+    if (!Number.isFinite(variantCount) || variantCount <= 0) {
+      return 0;
+    }
+    return Math.min(variantCount - 1, Math.floor(this._rng() * variantCount));
+  }
+
+  /**
+   * Purpose: sample a signed tumble rate for the debris sprite at spawn.
+   * Inputs assumptions: storm `rng` returns [0,1); `CONFIG.DEBRIS_PROBE` spin bounds are finite.
+   * Outputs contract: rad/s in roughly `±[MIN, MAX]` (inclusive magnitude range via linear lerp).
+   * Side effects: consumes two RNG draws (sign + magnitude).
+   * Failure modes: returns 0 if config range is invalid.
+   */
+  private _pickVisualSpinRadPerSec(): number {
+    const cfg = CONFIG.DEBRIS_PROBE;
+    const min = cfg.VISUAL_SPIN_RAD_PER_SEC_MIN;
+    const max = cfg.VISUAL_SPIN_RAD_PER_SEC_MAX;
+    if (!Number.isFinite(min) || !Number.isFinite(max) || max < min) {
+      return 0;
+    }
+    const sign = this._rng() < 0.5 ? -1 : 1;
+    const mag = min + this._rng() * (max - min);
+    return sign * mag;
+  }
+
+  /**
    * Attempt spawns for elapsed time. Uses renderer dimensions for edge positions and center target.
    */
   public update(dt: number, dims: StormSpawnDims, opts?: StormSpawnOpts): void {
@@ -142,7 +175,18 @@ export class DebrisStormSpawner {
     const id = debris.id;
     debris.tutorialFirstWaveActive = false;
     const gold = rollIsGoldFragment(rng, CONFIG.GOLD_DEBRIS.SPAWN_CHANCE);
-    debris.setStormState(id, x, y, fx * speed, fy * speed, gold);
+    const visualVariantIndex = this._pickVariantIndex(4);
+    const visualSpinRadPerSec = this._pickVisualSpinRadPerSec();
+    debris.setStormState(
+      id,
+      x,
+      y,
+      fx * speed,
+      fy * speed,
+      gold,
+      visualVariantIndex,
+      visualSpinRadPerSec,
+    );
   }
 
   /**
@@ -187,6 +231,17 @@ export class DebrisStormSpawner {
 
     const id = debris.id;
     debris.tutorialFirstWaveActive = true;
-    debris.setStormState(id, x, y, fx * speed, fy * speed, false);
+    const visualVariantIndex = this._pickVariantIndex(4);
+    const visualSpinRadPerSec = this._pickVisualSpinRadPerSec();
+    debris.setStormState(
+      id,
+      x,
+      y,
+      fx * speed,
+      fy * speed,
+      false,
+      visualVariantIndex,
+      visualSpinRadPerSec,
+    );
   }
 }

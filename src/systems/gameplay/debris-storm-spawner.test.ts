@@ -10,7 +10,7 @@ describe("DebrisStormSpawner", () => {
     const pool = new DebrisPool(4);
     pool.mount(parent);
 
-    const seq = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
+    const seq = [0.1, 0.2, 0.3, 0.4, 0.11, 0.12, 0.9, 0.6, 0.7, 0.8];
     let k = 0;
     const rng = (): number => {
       const v = seq[k % seq.length]!;
@@ -50,6 +50,7 @@ describe("DebrisStormSpawner", () => {
     expect(Math.abs(d.vx)).toBeLessThan(1e-6);
     expect(d.vy).toBeGreaterThan(0);
     expect(d.goldFragment).toBe(false);
+    expect(d.visualVariantIndex).toBe(0);
   });
 
   it("second spawn uses jitter and full speed range (not tutorial)", () => {
@@ -57,7 +58,7 @@ describe("DebrisStormSpawner", () => {
     const pool = new DebrisPool(4);
     pool.mount(parent);
 
-    const seq = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
+    const seq = [0.1, 0.2, 0.3, 0.4, 0.11, 0.12, 0.9, 0.6, 0.7, 0.8];
     let k = 0;
     const rng = (): number => {
       const v = seq[k % seq.length]!;
@@ -86,6 +87,8 @@ describe("DebrisStormSpawner", () => {
     const uvy = d2.vy / speed2;
     const inwardAlignment = Math.abs(ivx * uvx + ivy * uvy);
     expect(inwardAlignment).toBeLessThan(0.9999);
+    expect(d2.visualVariantIndex).toBeGreaterThanOrEqual(0);
+    expect(d2.visualVariantIndex).toBeLessThan(4);
   });
 
   it("procedural spawn rolls gold from rng after fixed tutorial draw sequence", () => {
@@ -95,11 +98,17 @@ describe("DebrisStormSpawner", () => {
 
     const draws = [
       0.5, // tutorial: base speed draw
-      0.1,
-      0.2,
-      0.3,
-      0.4,
-      0.05, // procedural: edge top + x + jitter + speed + gold roll (< SPAWN_CHANCE)
+      0.25, // tutorial variant
+      0.11, // tutorial spin sign (<0.5 → CCW)
+      0.5, // tutorial spin magnitude
+      0.1, // procedural edge
+      0.2, // procedural span axis
+      0.3, // procedural jitter
+      0.4, // procedural speed
+      0.05, // procedural gold roll (< SPAWN_CHANCE)
+      0.75, // procedural visual variant
+      0.66, // procedural spin sign (≥0.5 → CW)
+      0.25, // procedural spin magnitude
     ];
     let qi = 0;
     const rng = (): number => draws[qi++] ?? 0.99;
@@ -111,6 +120,7 @@ describe("DebrisStormSpawner", () => {
     expect(pool.activeCount).toBe(2);
     expect(pool.activeView()[0]!.goldFragment).toBe(false);
     expect(pool.activeView()[1]!.goldFragment).toBe(true);
+    expect(pool.activeView()[1]!.visualVariantIndex).toBe(3);
   });
 
   it("procedural spawn is not gold when final roll exceeds spawn chance", () => {
@@ -119,12 +129,18 @@ describe("DebrisStormSpawner", () => {
     pool.mount(parent);
 
     const draws = [
-      0.5,
-      0.1,
-      0.2,
-      0.3,
-      0.4,
+      0.5, // tutorial speed
+      0.25, // tutorial variant
+      0.11, // tutorial spin sign
+      0.5, // tutorial spin magnitude
+      0.1, // procedural edge
+      0.2, // procedural span axis
+      0.3, // procedural jitter
+      0.4, // procedural speed
       0.99, // gold roll fails
+      0.6, // procedural variant
+      0.55, // procedural spin sign
+      0.25, // procedural spin magnitude
     ];
     let qi = 0;
     const rng = (): number => draws[qi++] ?? 0.99;
@@ -134,6 +150,7 @@ describe("DebrisStormSpawner", () => {
     spawner.update(interval * 2, { width: 800, height: 600 });
 
     expect(pool.activeView()[1]!.goldFragment).toBe(false);
+    expect(pool.activeView()[1]!.visualVariantIndex).toBe(2);
   });
 
   it("does not consume tutorial spawn when pool is exhausted; applies on next acquire", () => {

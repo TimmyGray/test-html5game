@@ -1,5 +1,5 @@
 import type { Application } from "pixi.js";
-import { Container, Graphics } from "pixi.js";
+import { Container, Graphics, Sprite } from "pixi.js";
 import { CONFIG } from "./config/config.js";
 import {
   atmosphereTintFromHealth01,
@@ -29,6 +29,7 @@ import type { FlickIntent } from "./systems/input/flick-intent.js";
 import { DebrisPool } from "./systems/gameplay/debris-pool.js";
 import type { DebrisProbe } from "./systems/gameplay/debris-probe.js";
 import { DebrisStormSpawner } from "./systems/gameplay/debris-storm-spawner.js";
+import { getPlanetTexture } from "./systems/gameplay/gameplay-visual-assets.js";
 import {
   computeDeflectionScoreAward,
   goldImpulseEfficiency,
@@ -137,9 +138,11 @@ export function initGameplay(
 
   const planetRoot = new Container();
   planetRoot.eventMode = "none";
-  const planetBody = new Graphics();
-  planetBody.circle(0, 0, CONFIG.PLANET.RADIUS);
-  planetBody.fill({ color: 0x1a3352, alpha: 1 });
+  const planetBody = new Sprite(getPlanetTexture());
+  planetBody.anchor.set(0.5);
+  const planetDiameter = CONFIG.PLANET.RADIUS * 2;
+  planetBody.width = planetDiameter;
+  planetBody.height = planetDiameter;
   const planetRim = new Graphics();
   const planetHeartbeatFilter = new PlanetHeartbeatFilter();
   // Filter the body only; filtering the parent snapshots a full AABB (square halo).

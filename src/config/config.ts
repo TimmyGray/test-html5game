@@ -281,6 +281,21 @@ export const CONFIG = Object.freeze({
     INITIAL_VX: -140,
     INITIAL_VY: 0,
     COLOR: 0x66ccff,
+    /** Story 5.3: comet-tail gating threshold; below this speed no trail is drawn. */
+    TRAIL_MIN_SPEED: 96,
+    /** Story 5.3: normalized trail speed cap for length/alpha interpolation. */
+    TRAIL_MAX_SPEED: 320,
+    /** Story 5.3: tail geometry range in world pixels (velocity aligned). */
+    TRAIL_MIN_LENGTH: 20,
+    TRAIL_MAX_LENGTH: 86,
+    /** Story 5.3: tail stroke width range in world pixels. */
+    TRAIL_MIN_WIDTH: 4,
+    TRAIL_MAX_WIDTH: 12,
+    /** Story 5.3: strongest segment alpha before multi-segment falloff. */
+    TRAIL_MAX_ALPHA: 0.72,
+    /** Asteroid sprite tumble (rad/s); sign chosen at spawn for CW/CCW. */
+    VISUAL_SPIN_RAD_PER_SEC_MIN: 2.2,
+    VISUAL_SPIN_RAD_PER_SEC_MAX: 6.5,
   },
   /** Procedural storm + pooling (Story 1.3) */
   DEBRIS_POOL: Object.freeze({
@@ -313,7 +328,7 @@ export const CONFIG = Object.freeze({
       FLICK_HIGH_INTENSITY_MIN_WEIGHTED_SPEED_PX,
     SCORE_BONUS_MULTIPLIER: 5,
     BASE_DEFLECTION_SCORE: 10,
-    /** Fill for pooled Graphics circle */
+    /** Legacy tint constant; gold debris sprites use dedicated golden asteroid art (Story 5.3). */
     COLOR: 0xffcc33,
   }),
   /** First storm piece tutorial (Story 1.4) */

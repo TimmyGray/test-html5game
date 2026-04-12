@@ -266,15 +266,18 @@ So that I can hear rhythmic responses and control loudness per my environment.
 **Then** distinct routed SFX/audio cues are audible through a master audio bus
 **And** mute/volume controls affect all game audio consistently.
 
-## Story 5.3: Debris Motion Trails (Procedural)
+## Story 5.3: Planet + Debris Visual Asset Upgrade
 
 As a Player,
-I want debris to show motion trails,
-So that incoming threats are easier to read at high speed and the game feels more premium.
+I want the planet and debris to use polished image assets with comet-tail trails on moving asteroids,
+So that gameplay readability and visual quality match the premium presentation goal.
 
 **Acceptance Criteria:**
 
-**Given** debris is moving on screen
-**When** velocity is above trail threshold
-**Then** a velocity-aligned procedural trail is rendered with fade
-**And** the effect runs within the 60fps performance budget on supported targets.
+**Given** gameplay renders the center planet and incoming debris
+**When** the scene initializes and debris spawns
+**Then** the planet uses `assets/planet.png` and debris use sprite assets from the `assets/` folder instead of procedural circle placeholders
+**And** each normal debris spawn randomly picks one image from `assets/asteroid_1.png` through `assets/asteroid_4.png`
+**And** each heavy/golden debris spawn randomly picks one image from `assets/golden_asteroid_1.png` through `assets/golden_asteroid_4.png`
+**And** moving debris above trail threshold render a velocity-aligned comet tail with alpha fade
+**And** visual replacement and random selection preserve existing gameplay behavior and 60fps target on supported targets.

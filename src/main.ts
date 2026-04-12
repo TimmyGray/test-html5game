@@ -7,6 +7,7 @@ import { gameEvents, EVENTS } from "./core/events.js";
 import { readStoredHighScore } from "./core/high-score-storage.js";
 import { BackgroundMusicDirector } from "./core/background-music.js";
 import { initGameplay } from "./bootstrap-gameplay.js";
+import { ensureGameplayVisualAssetsLoaded } from "./systems/gameplay/gameplay-visual-assets.js";
 import { ResultsOverlayController } from "./ui/results-overlay.js";
 import { SessionHudController } from "./ui/session-hud.js";
 import bgmTrack128 from "../assets/Cosmic Freeway-128k.mp3";
@@ -140,6 +141,7 @@ function clamp01(value: number | undefined): number {
 (async () => {
   try {
     const app = await initPixiApp();
+    await ensureGameplayVisualAssetsLoaded();
 
     const container = document.getElementById("pixi-container");
     if (container) {
